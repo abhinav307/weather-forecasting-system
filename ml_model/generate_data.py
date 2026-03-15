@@ -11,7 +11,7 @@ import os
 
 np.random.seed(42)
 
-NUM_SAMPLES = 60000
+NUM_SAMPLES = 30000
 
 # ── Reference climate data for calibration ──────────────────────────
 # Format: (lat, lon, monthly_temps[12], monthly_humidity[12], monthly_rain_prob[12], monthly_wind[12])

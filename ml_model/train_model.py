@@ -75,11 +75,11 @@ def train_regression_model(X_train, X_test, y_train, y_test, target_name):
     print(f"{'='*50}")
     
     model = RandomForestRegressor(
-        n_estimators=150,
-        max_depth=20,
+        n_estimators=50,
+        max_depth=12,
         min_samples_split=5,
         min_samples_leaf=2,
-        n_jobs=-1,
+        n_jobs=1,
         random_state=42
     )
     
@@ -101,8 +101,8 @@ def train_regression_model(X_train, X_test, y_train, y_test, target_name):
         'mae': round(mae, 4),
         'rmse': round(rmse, 4),
         'r2_score': round(r2, 4),
-        'n_estimators': 150,
-        'max_depth': 20,
+        'n_estimators': 50,
+        'max_depth': 12,
         'training_samples': len(X_train),
         'test_samples': len(X_test)
     }
@@ -117,11 +117,11 @@ def train_classification_model(X_train, X_test, y_train, y_test):
     print(f"{'='*50}")
     
     model = RandomForestClassifier(
-        n_estimators=150,
-        max_depth=20,
+        n_estimators=50,
+        max_depth=12,
         min_samples_split=5,
         min_samples_leaf=2,
-        n_jobs=-1,
+        n_jobs=1,
         random_state=42
     )
     
