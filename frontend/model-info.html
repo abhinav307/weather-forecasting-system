@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Performance — WeatherAI</title>
+    <meta name="description" content="ML model metrics, accuracy, and training details for the WeatherAI forecasting system.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <nav class="navbar" id="navbar">
+        <a href="/" class="nav-brand">
+            <span class="nav-icon">⛅</span>
+            <span class="nav-title">Weather<span class="nav-highlight">AI</span></span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/forecast.html" class="nav-link">Forecast</a>
+            <a href="/annual.html" class="nav-link">Annual View</a>
+            <a href="/api-docs.html" class="nav-link">API Docs</a>
+            <a href="/model-info.html" class="nav-link active">Model Info</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-icon" id="theme-toggle" title="Toggle Theme">
+                <span class="theme-icon">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="page-main">
+        <div class="section">
+            <div class="section-header">
+                <h1 class="section-title">Model Performance</h1>
+                <p class="section-desc">Metrics and details about our trained ML models</p>
+            </div>
+
+            <div class="model-grid" id="model-grid">
+                <div class="model-card glass-card">
+                    <div class="model-header">
+                        <span class="model-icon">🌡️</span>
+                        <h3>Temperature Model</h3>
+                    </div>
+                    <div class="model-type">RandomForest Regressor</div>
+                    <div class="model-metrics">
+                        <div class="metric-row">
+                            <span>R² Score</span>
+                            <span class="metric-badge good" id="temp-r2">Loading...</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>MAE</span>
+                            <span class="metric-badge" id="temp-mae">Loading...</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>RMSE</span>
+                            <span class="metric-badge" id="temp-rmse">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card glass-card">
+                    <div class="model-header">
+                        <span class="model-icon">💧</span>
+                        <h3>Humidity Model</h3>
+                    </div>
+                    <div class="model-type">RandomForest Regressor</div>
+                    <div class="model-metrics">
+                        <div class="metric-row">
+                            <span>R² Score</span>
+                            <span class="metric-badge" id="hum-r2">Loading...</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>MAE</span>
+                            <span class="metric-badge" id="hum-mae">Loading...</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>RMSE</span>
+                            <span class="metric-badge" id="hum-rmse">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card glass-card">
+                    <div class="model-header">
+                        <span class="model-icon">💨</span>
+                        <h3>Wind Speed Model</h3>
+                    </div>
+                    <div class="model-type">RandomForest Regressor</div>
+                    <div class="model-metrics">
+                        <div class="metric-row">
+                            <span>R² Score</span>
+                            <span class="metric-badge" id="wind-r2">Loading...</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>MAE</span>
+                            <span class="metric-badge" id="wind-mae">Loading...</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>RMSE</span>
+                            <span class="metric-badge" id="wind-rmse">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card glass-card">
+                    <div class="model-header">
+                        <span class="model-icon">🌧️</span>
+                        <h3>Rain Model</h3>
+                    </div>
+                    <div class="model-type">RandomForest Classifier</div>
+                    <div class="model-metrics">
+                        <div class="metric-row">
+                            <span>Accuracy</span>
+                            <span class="metric-badge" id="rain-acc">Loading...</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>Precision</span>
+                            <span class="metric-badge" id="rain-prec">Loading...</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>F1 Score</span>
+                            <span class="metric-badge" id="rain-f1">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Details -->
+            <div class="training-info glass-card" id="training-info">
+                <h3>Training Details</h3>
+                <div class="training-grid">
+                    <div class="training-item">
+                        <span class="training-label">Algorithm</span>
+                        <span class="training-value">Random Forest</span>
+                    </div>
+                    <div class="training-item">
+                        <span class="training-label">Framework</span>
+                        <span class="training-value">scikit-learn</span>
+                    </div>
+                    <div class="training-item">
+                        <span class="training-label">Training Samples</span>
+                        <span class="training-value" id="train-samples">40,000</span>
+                    </div>
+                    <div class="training-item">
+                        <span class="training-label">Test Samples</span>
+                        <span class="training-value" id="test-samples">10,000</span>
+                    </div>
+                    <div class="training-item">
+                        <span class="training-label">Features</span>
+                        <span class="training-value">12 (6 raw + 6 engineered)</span>
+                    </div>
+                    <div class="training-item">
+                        <span class="training-label">Estimators</span>
+                        <span class="training-value">150 trees per model</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature Details -->
+            <div class="features-info glass-card">
+                <h3>Input Features</h3>
+                <div class="features-detail-grid">
+                    <div class="feature-detail-card">
+                        <h4>Raw Features</h4>
+                        <ul class="feature-list">
+                            <li><code>latitude</code> — Geographic latitude (-90 to 90)</li>
+                            <li><code>longitude</code> — Geographic longitude (-180 to 180)</li>
+                            <li><code>month</code> — Month of year (1-12)</li>
+                            <li><code>day_of_year</code> — Day of the year (1-365)</li>
+                            <li><code>elevation</code> — Estimated elevation in meters</li>
+                            <li><code>distance_to_coast</code> — Approx distance to nearest coast</li>
+                        </ul>
+                    </div>
+                    <div class="feature-detail-card">
+                        <h4>Engineered Features</h4>
+                        <ul class="feature-list">
+                            <li><code>month_sin</code> — Cyclical month encoding (sin)</li>
+                            <li><code>month_cos</code> — Cyclical month encoding (cos)</li>
+                            <li><code>day_sin</code> — Cyclical day encoding (sin)</li>
+                            <li><code>day_cos</code> — Cyclical day encoding (cos)</li>
+                            <li><code>abs_latitude</code> — Distance from equator</li>
+                            <li><code>is_northern</code> — Northern hemisphere flag</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand"><span class="footer-icon">⛅</span><span>WeatherAI</span></div>
+            <p class="footer-text">AI-powered weather forecasting using Random Forest models.</p>
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="/forecast.html">Forecast</a>
+                <a href="/annual.html">Annual</a>
+                <a href="/api-docs.html">API</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="shared.js"></script>
+    <script src="model-info.js"></script>
+</body>
+
+</html>

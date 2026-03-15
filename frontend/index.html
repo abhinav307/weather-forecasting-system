@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherAI — Intelligent Weather Forecasting</title>
+    <meta name="description" content="AI-powered weather predictions using machine learning. Select any region on Earth and get instant forecasts for temperature, rain, humidity, and wind speed.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <a href="/" class="nav-brand">
+            <span class="nav-icon">⛅</span>
+            <span class="nav-title">Weather<span class="nav-highlight">AI</span></span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link active">Home</a>
+            <a href="/forecast.html" class="nav-link">Forecast</a>
+            <a href="/annual.html" class="nav-link">Annual View</a>
+            <a href="/api-docs.html" class="nav-link">API Docs</a>
+            <a href="/model-info.html" class="nav-link">Model Info</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-icon" id="theme-toggle" title="Toggle Theme">
+                <span class="theme-icon">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero" id="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="hero-emoji">🌍</span>
+                AI-Powered Weather
+                <span class="gradient-text">Forecasting</span>
+            </h1>
+            <p class="hero-subtitle">
+                Machine Learning predictions for any location on Earth. 
+                Click the map or search for a city to get instant weather forecasts.
+            </p>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-value">4</span>
+                    <span class="stat-label">ML Models</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">50K</span>
+                    <span class="stat-label">Training Samples</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">∞</span>
+                    <span class="stat-label">Locations</span>
+                </div>
+            </div>
+            <a href="/forecast.html" class="hero-cta">
+                <span>Start Forecasting</span>
+                <span class="cta-arrow">→</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Feature Cards -->
+    <section class="section" id="features">
+        <div class="section-header">
+            <h2 class="section-title">What We Predict</h2>
+            <p class="section-desc">Four ML models working together to forecast weather</p>
+        </div>
+        <div class="feature-grid">
+            <div class="feature-card glass-card">
+                <div class="feature-icon-wrap" style="--accent: #ff6b6b;">
+                    <span class="feature-icon">🌡️</span>
+                </div>
+                <h3 class="feature-name">Temperature</h3>
+                <p class="feature-desc">Accurate temperature predictions using our regression model with R² = 0.95</p>
+                <div class="feature-tag">RandomForest Regressor</div>
+            </div>
+            <div class="feature-card glass-card">
+                <div class="feature-icon-wrap" style="--accent: #4ecdc4;">
+                    <span class="feature-icon">🌧️</span>
+                </div>
+                <h3 class="feature-name">Rain / No Rain</h3>
+                <p class="feature-desc">Binary classification to predict rainfall probability for any location</p>
+                <div class="feature-tag">RandomForest Classifier</div>
+            </div>
+            <div class="feature-card glass-card">
+                <div class="feature-icon-wrap" style="--accent: #45b7d1;">
+                    <span class="feature-icon">💧</span>
+                </div>
+                <h3 class="feature-name">Humidity</h3>
+                <p class="feature-desc">Relative humidity forecasting based on geography and seasonal patterns</p>
+                <div class="feature-tag">RandomForest Regressor</div>
+            </div>
+            <div class="feature-card glass-card">
+                <div class="feature-icon-wrap" style="--accent: #96ceb4;">
+                    <span class="feature-icon">💨</span>
+                </div>
+                <h3 class="feature-name">Wind Speed</h3>
+                <p class="feature-desc">Wind speed estimates factoring in elevation, coast proximity, and season</p>
+                <div class="feature-tag">RandomForest Regressor</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-desc">From data to predictions in milliseconds</p>
+        </div>
+        <div class="steps-grid">
+            <div class="step-card glass-card">
+                <div class="step-number">01</div>
+                <h3>Select Location</h3>
+                <p>Click anywhere on the interactive map or search for a city by name</p>
+            </div>
+            <div class="step-connector">→</div>
+            <div class="step-card glass-card">
+                <div class="step-number">02</div>
+                <h3>Choose Month</h3>
+                <p>Pick any month to see seasonal weather variations for that location</p>
+            </div>
+            <div class="step-connector">→</div>
+            <div class="step-card glass-card">
+                <div class="step-number">03</div>
+                <h3>Get Predictions</h3>
+                <p>Our ML models instantly predict temperature, rain, humidity, and wind</p>
+            </div>
+        </div>
+        <div class="steps-cta">
+            <a href="/forecast.html" class="hero-cta">
+                <span>Try It Now</span>
+                <span class="cta-arrow">→</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Quick Links -->
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">Explore</h2>
+            <p class="section-desc">Dive deeper into the system</p>
+        </div>
+        <div class="explore-grid">
+            <a href="/annual.html" class="explore-card glass-card">
+                <span class="explore-icon">📊</span>
+                <h3>Annual Overview</h3>
+                <p>12-month temperature, humidity, wind, and rain trends</p>
+                <span class="explore-arrow">→</span>
+            </a>
+            <a href="/api-docs.html" class="explore-card glass-card">
+                <span class="explore-icon">📡</span>
+                <h3>API Documentation</h3>
+                <p>Integrate weather predictions into your apps</p>
+                <span class="explore-arrow">→</span>
+            </a>
+            <a href="/model-info.html" class="explore-card glass-card">
+                <span class="explore-icon">🤖</span>
+                <h3>Model Performance</h3>
+                <p>Metrics, accuracy, and training details</p>
+                <span class="explore-arrow">→</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Concepts Section (Home page only) -->
+    <section class="section" id="concepts">
+        <div class="section-header">
+            <h2 class="section-title">📘 ML Concepts Used</h2>
+            <p class="section-desc">Interview-ready breakdown of every technique powering WeatherAI</p>
+        </div>
+
+        <!-- Toggle Button -->
+        <div style="text-align:center; margin-bottom: var(--space-xl);">
+            <button class="hero-cta" id="concepts-toggle" onclick="document.getElementById('concepts-content').classList.toggle('hidden'); this.querySelector('.cta-label').textContent = document.getElementById('concepts-content').classList.contains('hidden') ? 'Show Concepts' : 'Hide Concepts';">
+                <span class="cta-label">Show Concepts</span>
+                <span class="cta-arrow">📖</span>
+            </button>
+        </div>
+
+        <div id="concepts-content" class="hidden">
+
+            <!-- 1. Random Forest -->
+            <div class="concept-card glass-card">
+                <div class="concept-header">
+                    <span class="concept-number">01</span>
+                    <h3 class="concept-title">🌲 Random Forest Algorithm</h3>
+                    <span class="concept-badge">Core Algorithm</span>
+                </div>
+                <div class="concept-body">
+                    <p><strong>What is it?</strong> Random Forest is an <em>ensemble learning</em> method that builds <strong>multiple decision trees</strong> during training and outputs the average (regression) or majority vote (classification) of individual trees.</p>
+
+                    <div class="concept-detail-grid">
+                        <div class="concept-detail-item">
+                            <h4>Why Random Forest?</h4>
+                            <ul>
+                                <li>Handles <strong>non-linear relationships</strong> — weather is not linear</li>
+                                <li>Resistant to <strong>overfitting</strong> due to bagging (Bootstrap Aggregating)</li>
+                                <li>Works well with <strong>mixed feature types</strong> (lat, lon, elevation, month)</li>
+                                <li>No need for feature scaling (but we still scale for consistency)</li>
+                                <li>Provides <strong>feature importance</strong> rankings automatically</li>
+                            </ul>
+                        </div>
+                        <div class="concept-detail-item">
+                            <h4>Our Configuration</h4>
+                            <div class="concept-code">
+                                <code>n_estimators = 150</code> → 150 decision trees in the forest<br>
+                                <code>max_depth = 20</code> → Each tree can go 20 levels deep<br>
+                                <code>min_samples_split = 5</code> → Need 5+ samples to split a node<br>
+                                <code>min_samples_leaf = 2</code> → Leaves must have 2+ samples<br>
+                                <code>n_jobs = -1</code> → Use all CPU cores for parallel training<br>
+                                <code>random_state = 42</code> → Reproducible results
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="concept-compare">
+                        <h4>Why Not Other Algorithms?</h4>
+                        <table class="concept-table">
+                            <thead>
+                                <tr><th>Algorithm</th><th>Pros</th><th>Why We Didn't Use It</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>Neural Network</strong></td><td>Best for complex patterns, image/text</td><td>Overkill for tabular data with 12 features; needs more data & GPUs</td></tr>
+                                <tr><td><strong>Decision Tree</strong></td><td>Simple, interpretable</td><td>Single tree overfits easily; Random Forest = many trees averaged</td></tr>
+                                <tr><td><strong>Linear Regression</strong></td><td>Fast, simple</td><td>Can't capture non-linear weather patterns (monsoon seasonality etc.)</td></tr>
+                                <tr><td><strong>XGBoost</strong></td><td>Often better accuracy</td><td>Viable alternative; RF was chosen for simplicity + interpretability</td></tr>
+                                <tr><td><strong>SVM</strong></td><td>Good for small datasets</td><td>Slow on 50K samples; doesn't provide probability estimates easily</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Regression vs Classification -->
+            <div class="concept-card glass-card">
+                <div class="concept-header">
+                    <span class="concept-number">02</span>
+                    <h3 class="concept-title">📊 Regression vs Classification</h3>
+                    <span class="concept-badge">Problem Types</span>
+                </div>
+                <div class="concept-body">
+                    <p>We use <strong>both types</strong> of supervised learning in this project:</p>
+                    <div class="concept-detail-grid">
+                        <div class="concept-detail-item">
+                            <h4>🔢 Regression (Continuous Output)</h4>
+                            <p>Predicts a <strong>number</strong> — used for Temperature, Humidity, Wind Speed</p>
+                            <div class="concept-code">
+                                <code>RandomForestRegressor</code><br>
+                                Output: 38.9°C, 69.8%, 16.2 km/h<br>
+                                Loss: Mean Squared Error (MSE)<br>
+                                Metric: R² Score, MAE, RMSE
+                            </div>
+                        </div>
+                        <div class="concept-detail-item">
+                            <h4>✅/❌ Classification (Binary Output)</h4>
+                            <p>Predicts a <strong>category</strong> — used for Rain / No Rain</p>
+                            <div class="concept-code">
+                                <code>RandomForestClassifier</code><br>
+                                Output: Rain (1) or No Rain (0)<br>
+                                Also gives: probability (e.g. 46.5%)<br>
+                                Metric: Accuracy, Precision, Recall, F1
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Feature Engineering -->
+            <div class="concept-card glass-card">
+                <div class="concept-header">
+                    <span class="concept-number">03</span>
+                    <h3 class="concept-title">⚙️ Feature Engineering</h3>
+                    <span class="concept-badge">Data Preparation</span>
+                </div>
+                <div class="concept-body">
+                    <p>Raw data isn't enough — we <strong>engineer new features</strong> to help the model learn patterns better.</p>
+                    <div class="concept-detail-grid">
+                        <div class="concept-detail-item">
+                            <h4>Original Features (6)</h4>
+                            <ul>
+                                <li><strong>latitude, longitude</strong> — Location on Earth</li>
+                                <li><strong>month</strong> — Which month (1-12)</li>
+                                <li><strong>day_of_year</strong> — Day number (1-365)</li>
+                                <li><strong>elevation</strong> — Height above sea level (meters)</li>
+                                <li><strong>distance_to_coast</strong> — How far from ocean (km)</li>
+                            </ul>
+                        </div>
+                        <div class="concept-detail-item">
+                            <h4>Engineered Features (+6)</h4>
+                            <ul>
+                                <li><strong>month_sin, month_cos</strong> — Cyclical encoding so Dec→Jan is smooth, not a jump from 12→1</li>
+                                <li><strong>day_sin, day_cos</strong> — Same for day of year</li>
+                                <li><strong>abs_latitude</strong> — Distance from equator (both hemispheres treated equally)</li>
+                                <li><strong>is_northern</strong> — Hemisphere flag (seasons are flipped N vs S)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="concept-highlight">
+                        <strong>💡 Why Cyclical Encoding?</strong> Without it, the model sees December (12) and January (1) as far apart. Using sin/cos, Dec and Jan become mathematically close — which reflects real weather continuity.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. StandardScaler -->
+            <div class="concept-card glass-card">
+                <div class="concept-header">
+                    <span class="concept-number">04</span>
+                    <h3 class="concept-title">📏 StandardScaler (Normalization)</h3>
+                    <span class="concept-badge">Preprocessing</span>
+                </div>
+                <div class="concept-body">
+                    <p><strong>What?</strong> Transforms each feature to have <strong>mean = 0</strong> and <strong>standard deviation = 1</strong>.</p>
+                    <div class="concept-code" style="max-width:100%;">
+                        Formula: <code>X_scaled = (X - mean) / std_deviation</code><br><br>
+                        Example: Latitude ranges [-90, 90], Elevation ranges [0, 8000]<br>
+                        After scaling: both range approximately [-2, 2]
+                    </div>
+                    <div class="concept-highlight">
+                        <strong>💡 Interview tip:</strong> Random Forest doesn't actually <em>need</em> scaling (it's tree-based, splits don't care about scale). But we apply it anyway because: (1) it's good practice, (2) it makes the model portable to other algorithms, (3) the <code>scaler.joblib</code> is saved and reused at inference time for consistency.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Train/Test Split -->
+            <div class="concept-card glass-card">
+                <div class="concept-header">
+                    <span class="concept-number">05</span>
+                    <h3 class="concept-title">✂️ Train / Test Split</h3>
+                    <span class="concept-badge">Validation</span>
+                </div>
+                <div class="concept-body">
+                    <div class="concept-detail-grid">
+                        <div class="concept-detail-item">
+                            <h4>How We Split</h4>
+                            <div class="concept-code">
+                                <code>train_test_split(X, test_size=0.2, random_state=42)</code><br><br>
+                                Total: 50,000 samples<br>
+                                Training: 40,000 (80%)<br>
+                                Testing: 10,000 (20%)
+                            </div>
+                        </div>
+                        <div class="concept-detail-item">
+                            <h4>Why?</h4>
+                            <ul>
+                                <li>Model learns on <strong>80%</strong> of data</li>
+                                <li>We test accuracy on the <strong>20%</strong> it has never seen</li>
+                                <li>Prevents <strong>overfitting</strong> — if training R² is 0.99 but test R² is 0.50, the model memorized instead of learning</li>
+                                <li><code>random_state=42</code> ensures same split every time for reproducibility</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Evaluation Metrics -->
+            <div class="concept-card glass-card">
+                <div class="concept-header">
+                    <span class="concept-number">06</span>
+                    <h3 class="concept-title">📈 Evaluation Metrics</h3>
+                    <span class="concept-badge">Model Quality</span>
+                </div>
+                <div class="concept-body">
+                    <div class="concept-detail-grid">
+                        <div class="concept-detail-item">
+                            <h4>Regression Metrics</h4>
+                            <ul>
+                                <li><strong>R² Score</strong> — % of variance explained (1.0 = perfect). Our temp model: <strong>0.91</strong></li>
+                                <li><strong>MAE</strong> — Average error in original units. Temp MAE: <strong>~2.1°C</strong></li>
+                                <li><strong>RMSE</strong> — Like MAE but penalises big errors more. Temp RMSE: <strong>~3.0°C</strong></li>
+                            </ul>
+                        </div>
+                        <div class="concept-detail-item">
+                            <h4>Classification Metrics</h4>
+                            <ul>
+                                <li><strong>Accuracy</strong> — % correct predictions overall</li>
+                                <li><strong>Precision</strong> — Of predicted "Rain", how many were actually rain?</li>
+                                <li><strong>Recall</strong> — Of actual rain days, how many did we catch?</li>
+                                <li><strong>F1 Score</strong> — Harmonic mean of Precision & Recall</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. Full Pipeline -->
+            <div class="concept-card glass-card">
+                <div class="concept-header">
+                    <span class="concept-number">07</span>
+                    <h3 class="concept-title">🔄 Full ML Pipeline</h3>
+                    <span class="concept-badge">End to End</span>
+                </div>
+                <div class="concept-body">
+                    <p>Here's the complete flow from raw data to live predictions:</p>
+                    <div class="pipeline-flow">
+                        <div class="pipeline-step">
+                            <span class="pipeline-icon">📊</span>
+                            <strong>Data Generation</strong>
+                            <small>38 reference cities → 50K synthetic samples via IDW interpolation</small>
+                        </div>
+                        <div class="pipeline-arrow">↓</div>
+                        <div class="pipeline-step">
+                            <span class="pipeline-icon">⚙️</span>
+                            <strong>Feature Engineering</strong>
+                            <small>6 raw features → 12 engineered features (cyclical encoding, hemisphere)</small>
+                        </div>
+                        <div class="pipeline-arrow">↓</div>
+                        <div class="pipeline-step">
+                            <span class="pipeline-icon">📏</span>
+                            <strong>StandardScaler</strong>
+                            <small>Normalize all features to mean=0, std=1</small>
+                        </div>
+                        <div class="pipeline-arrow">↓</div>
+                        <div class="pipeline-step">
+                            <span class="pipeline-icon">✂️</span>
+                            <strong>Train / Test Split</strong>
+                            <small>80% training (40K) · 20% testing (10K)</small>
+                        </div>
+                        <div class="pipeline-arrow">↓</div>
+                        <div class="pipeline-step">
+                            <span class="pipeline-icon">🌲</span>
+                            <strong>Random Forest Training</strong>
+                            <small>4 models × 150 trees each · Bagging + Feature Randomness</small>
+                        </div>
+                        <div class="pipeline-arrow">↓</div>
+                        <div class="pipeline-step">
+                            <span class="pipeline-icon">📈</span>
+                            <strong>Evaluation</strong>
+                            <small>R², MAE, RMSE (regression) · Accuracy, F1 (classification)</small>
+                        </div>
+                        <div class="pipeline-arrow">↓</div>
+                        <div class="pipeline-step">
+                            <span class="pipeline-icon">💾</span>
+                            <strong>Save & Serve</strong>
+                            <small>joblib serialization → Flask API → Frontend dashboard</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. Derived Meteorological Formulas -->
+            <div class="concept-card glass-card">
+                <div class="concept-header">
+                    <span class="concept-number">08</span>
+                    <h3 class="concept-title">🌡️ Derived Meteorological Formulas</h3>
+                    <span class="concept-badge">Post-Processing</span>
+                </div>
+                <div class="concept-body">
+                    <p>Beyond ML predictions, we compute additional weather metrics using <strong>standard meteorological formulas</strong>:</p>
+                    <div class="concept-detail-grid">
+                        <div class="concept-detail-item">
+                            <h4>Formulas Used</h4>
+                            <ul>
+                                <li><strong>NWS Heat Index</strong> — Rothfusz regression for "feels like" in hot+humid conditions</li>
+                                <li><strong>Wind Chill</strong> — Environment Canada formula for cold+windy conditions</li>
+                                <li><strong>Magnus-Tetens Dew Point</strong> — Td = (b·α)/(a−α) where α = (a·T)/(b+T) + ln(RH/100)</li>
+                                <li><strong>UV Index</strong> — Based on solar declination angle + cloud/humidity attenuation</li>
+                                <li><strong>Visibility</strong> — Fog/haze/rain model with humidity thresholds</li>
+                                <li><strong>Pressure</strong> — Hypsometric equation with latitude, season, temperature</li>
+                            </ul>
+                        </div>
+                        <div class="concept-detail-item">
+                            <h4>Global Validation Rules</h4>
+                            <ul>
+                                <li>Dew point must always be ≤ temperature</li>
+                                <li>Hot + humid → feels like must be ≥ temperature</li>
+                                <li>Cold + windy → feels like must be ≤ temperature</li>
+                                <li>Humidity bounded 0-100%</li>
+                                <li>Temperature bounded -89°C to 57°C (Earth records)</li>
+                                <li>Every API response includes a <code>validation</code> object</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- #concepts-content -->
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <span class="footer-icon">⛅</span>
+                <span>WeatherAI</span>
+            </div>
+            <p class="footer-text">AI-powered weather forecasting using Random Forest models.</p>
+            <div class="footer-links">
+                <a href="/forecast.html">Forecast</a>
+                <a href="/api-docs.html">API</a>
+                <a href="/model-info.html">Models</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="shared.js"></script>
+</body>
+
+</html>

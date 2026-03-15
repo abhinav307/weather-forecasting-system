@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Annual Overview — WeatherAI</title>
+    <meta name="description" content="12-month weather trends for any location on Earth.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <a href="/" class="nav-brand">
+            <span class="nav-icon">⛅</span>
+            <span class="nav-title">Weather<span class="nav-highlight">AI</span></span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/forecast.html" class="nav-link">Forecast</a>
+            <a href="/annual.html" class="nav-link active">Annual View</a>
+            <a href="/api-docs.html" class="nav-link">API Docs</a>
+            <a href="/model-info.html" class="nav-link">Model Info</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-icon" id="theme-toggle" title="Toggle Theme">
+                <span class="theme-icon">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="page-main">
+        <div class="section">
+            <div class="section-header">
+                <h1 class="section-title">Annual Overview</h1>
+                <p class="section-desc">12-month weather trends — search or click a location on the mini-map</p>
+            </div>
+
+            <!-- Location Picker (compact) -->
+            <div class="annual-controls">
+                <div class="annual-search-row glass-card">
+                    <div class="search-container" style="flex:1;">
+                        <div class="search-input-wrap">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="location-search" class="search-input"
+                                placeholder="Search city..." autocomplete="off">
+                            <button id="search-btn" class="search-btn">Search</button>
+                            <div id="search-results" class="search-results hidden"></div>
+                        </div>
+                    </div>
+                    <div class="annual-location-display">
+                        <span id="place-display" class="detail-value">Select a location</span>
+                        <span id="coords-display" class="detail-label"></span>
+                    </div>
+                </div>
+                <div class="annual-minimap glass-card">
+                    <div id="map" style="height:250px;border-radius:var(--radius-lg);"></div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="annual-container hidden" id="annual-container">
+                <div class="chart-wrapper glass-card">
+                    <h3 class="chart-title">🌡️ Temperature & 💧 Humidity Trends</h3>
+                    <canvas id="annual-chart"></canvas>
+                </div>
+                <div class="chart-wrapper glass-card">
+                    <h3 class="chart-title">💨 Wind Speed & 🌧️ Rain Probability</h3>
+                    <canvas id="annual-chart-2"></canvas>
+                </div>
+            </div>
+
+            <!-- Monthly Data Table -->
+            <div class="monthly-table-wrap glass-card hidden" id="monthly-table-wrap">
+                <h3 class="chart-title">Monthly Breakdown</h3>
+                <div class="table-scroll">
+                    <table class="monthly-table" id="monthly-table">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Temp (°C)</th>
+                                <th>Humidity (%)</th>
+                                <th>Wind (km/h)</th>
+                                <th>Rain (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthly-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="annual-placeholder" id="annual-placeholder">
+                <span class="placeholder-icon">📊</span>
+                <p>Search for a city or click the mini-map to see annual weather trends</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand"><span class="footer-icon">⛅</span><span>WeatherAI</span></div>
+            <p class="footer-text">AI-powered weather forecasting using Random Forest models.</p>
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="/forecast.html">Forecast</a>
+                <a href="/api-docs.html">API</a>
+                <a href="/model-info.html">Models</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="shared.js"></script>
+    <script src="annual.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecast — WeatherAI</title>
+    <meta name="description" content="Get instant weather predictions for any location on Earth using our ML models.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <a href="/" class="nav-brand">
+            <span class="nav-icon">⛅</span>
+            <span class="nav-title">Weather<span class="nav-highlight">AI</span></span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/forecast.html" class="nav-link active">Forecast</a>
+            <a href="/annual.html" class="nav-link">Annual View</a>
+            <a href="/api-docs.html" class="nav-link">API Docs</a>
+            <a href="/model-info.html" class="nav-link">Model Info</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-icon" id="theme-toggle" title="Toggle Theme">
+                <span class="theme-icon">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <main class="page-main">
+        <div class="section">
+            <div class="section-header">
+                <h1 class="section-title">Weather Forecast</h1>
+                <p class="section-desc">Click anywhere on the map or search for a location</p>
+            </div>
+
+            <div class="forecast-layout">
+                <!-- Search & Controls -->
+                <div class="controls-panel glass-card">
+                    <div class="search-container">
+                        <div class="search-input-wrap">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="location-search" class="search-input"
+                                placeholder="Search city or place..." autocomplete="off">
+                            <button id="search-btn" class="search-btn">Search</button>
+                        </div>
+                        <div id="search-results" class="search-results hidden"></div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Month</label>
+                        <div class="month-selector" id="month-selector">
+                            <button class="month-btn" data-month="1">Jan</button>
+                            <button class="month-btn" data-month="2">Feb</button>
+                            <button class="month-btn" data-month="3">Mar</button>
+                            <button class="month-btn" data-month="4">Apr</button>
+                            <button class="month-btn" data-month="5">May</button>
+                            <button class="month-btn" data-month="6">Jun</button>
+                            <button class="month-btn" data-month="7">Jul</button>
+                            <button class="month-btn" data-month="8">Aug</button>
+                            <button class="month-btn" data-month="9">Sep</button>
+                            <button class="month-btn" data-month="10">Oct</button>
+                            <button class="month-btn" data-month="11">Nov</button>
+                            <button class="month-btn" data-month="12">Dec</button>
+                        </div>
+                    </div>
+
+                    <div class="location-info" id="location-info">
+                        <div class="location-detail">
+                            <span class="detail-label">Latitude</span>
+                            <span class="detail-value" id="lat-display">—</span>
+                        </div>
+                        <div class="location-detail">
+                            <span class="detail-label">Longitude</span>
+                            <span class="detail-value" id="lon-display">—</span>
+                        </div>
+                        <div class="location-detail">
+                            <span class="detail-label">Location</span>
+                            <span class="detail-value" id="place-display">Click map to select</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map -->
+                <div class="map-container glass-card">
+                    <div id="map"></div>
+                    <div class="map-overlay" id="map-loading">
+                        <div class="map-loader"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Results -->
+            <div class="results-container hidden" id="results-container">
+                <!-- Condition Banner -->
+                <div class="condition-banner glass-card" id="condition-banner">
+                    <div class="condition-main">
+                        <span class="condition-icon" id="condition-icon">☀️</span>
+                        <div class="condition-text">
+                            <h3 class="condition-name" id="condition-name">Sunny</h3>
+                            <p class="condition-location" id="condition-location">—</p>
+                        </div>
+                    </div>
+                    <div class="condition-temp">
+                        <span class="temp-value" id="temp-big">—</span>
+                        <span class="temp-unit">°C</span>
+                    </div>
+                </div>
+
+                <!-- Prediction Cards -->
+                <div class="prediction-grid">
+                    <div class="prediction-card glass-card" id="card-temp" style="--card-accent: #ff6b6b;">
+                        <div class="card-header">
+                            <span class="card-icon">🌡️</span>
+                            <span class="card-title">Temperature</span>
+                        </div>
+                        <div class="card-value">
+                            <span id="temp-value">—</span>
+                            <span class="card-unit">°C</span>
+                        </div>
+                        <div class="card-extra">
+                            <span class="extra-label">Feels like</span>
+                            <span class="extra-value" id="feels-like">—°C</span>
+                        </div>
+                        <div class="card-bar">
+                            <div class="bar-fill" id="temp-bar" style="--bar-color: #ff6b6b;"></div>
+                        </div>
+                    </div>
+
+                    <div class="prediction-card glass-card" id="card-rain" style="--card-accent: #4ecdc4;">
+                        <div class="card-header">
+                            <span class="card-icon">🌧️</span>
+                            <span class="card-title">Rain Probability</span>
+                        </div>
+                        <div class="card-value">
+                            <span id="rain-value">—</span>
+                            <span class="card-unit">%</span>
+                        </div>
+                        <div class="card-extra">
+                            <span class="extra-label">Prediction</span>
+                            <span class="extra-value" id="rain-prediction">—</span>
+                        </div>
+                        <div class="card-bar">
+                            <div class="bar-fill" id="rain-bar" style="--bar-color: #4ecdc4;"></div>
+                        </div>
+                    </div>
+
+                    <div class="prediction-card glass-card" id="card-humidity" style="--card-accent: #45b7d1;">
+                        <div class="card-header">
+                            <span class="card-icon">💧</span>
+                            <span class="card-title">Humidity</span>
+                        </div>
+                        <div class="card-value">
+                            <span id="humidity-value">—</span>
+                            <span class="card-unit">%</span>
+                        </div>
+                        <div class="card-extra">
+                            <span class="extra-label">Dew Point</span>
+                            <span class="extra-value" id="dew-point">—°C</span>
+                        </div>
+                        <div class="card-bar">
+                            <div class="bar-fill" id="humidity-bar" style="--bar-color: #45b7d1;"></div>
+                        </div>
+                    </div>
+
+                    <div class="prediction-card glass-card" id="card-wind" style="--card-accent: #96ceb4;">
+                        <div class="card-header">
+                            <span class="card-icon">💨</span>
+                            <span class="card-title">Wind Speed</span>
+                        </div>
+                        <div class="card-value">
+                            <span id="wind-value">—</span>
+                            <span class="card-unit">km/h</span>
+                        </div>
+                        <div class="card-extra">
+                            <span class="extra-label">Visibility</span>
+                            <span class="extra-value" id="visibility">— km</span>
+                        </div>
+                        <div class="card-bar">
+                            <div class="bar-fill" id="wind-bar" style="--bar-color: #96ceb4;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Metrics -->
+                <div class="additional-metrics glass-card">
+                    <div class="metric-item">
+                        <span class="metric-icon">☀️</span>
+                        <span class="metric-label">UV Index</span>
+                        <span class="metric-value" id="uv-index">—</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-icon">👁️</span>
+                        <span class="metric-label">Visibility</span>
+                        <span class="metric-value" id="visibility-metric">— km</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-icon">🌡️</span>
+                        <span class="metric-label">Dew Point</span>
+                        <span class="metric-value" id="dew-point-metric">—°C</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-icon">📊</span>
+                        <span class="metric-label">Pressure</span>
+                        <span class="metric-value" id="pressure">— hPa</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <span class="footer-icon">⛅</span>
+                <span>WeatherAI</span>
+            </div>
+            <p class="footer-text">AI-powered weather forecasting using Random Forest models.</p>
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="/annual.html">Annual</a>
+                <a href="/api-docs.html">API</a>
+                <a href="/model-info.html">Models</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="shared.js"></script>
+    <script src="forecast.js"></script>
+</body>
+
+</html>

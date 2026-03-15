@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation — WeatherAI</title>
+    <meta name="description" content="REST API documentation for the WeatherAI weather forecasting system.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <nav class="navbar" id="navbar">
+        <a href="/" class="nav-brand">
+            <span class="nav-icon">⛅</span>
+            <span class="nav-title">Weather<span class="nav-highlight">AI</span></span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/forecast.html" class="nav-link">Forecast</a>
+            <a href="/annual.html" class="nav-link">Annual View</a>
+            <a href="/api-docs.html" class="nav-link active">API Docs</a>
+            <a href="/model-info.html" class="nav-link">Model Info</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-icon" id="theme-toggle" title="Toggle Theme">
+                <span class="theme-icon">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="page-main">
+        <div class="section">
+            <div class="section-header">
+                <h1 class="section-title">API Documentation</h1>
+                <p class="section-desc">Integrate weather predictions into your applications</p>
+            </div>
+
+            <!-- API Overview -->
+            <div class="api-overview glass-card">
+                <h3>Base URL</h3>
+                <pre class="code-block"><code id="base-url">http://localhost:5000</code></pre>
+                <p class="api-overview-text">All endpoints return JSON responses. No authentication is required.</p>
+            </div>
+
+            <div class="api-grid">
+                <!-- Predict Endpoint -->
+                <div class="api-card glass-card">
+                    <div class="api-method get">GET</div>
+                    <h3 class="api-endpoint">/api/predict</h3>
+                    <p class="api-desc">Get weather predictions for a specific location and month. Returns temperature, humidity, wind speed, rain probability, and additional derived metrics.</p>
+                    <div class="api-params">
+                        <h4>Parameters</h4>
+                        <table class="params-table">
+                            <thead>
+                                <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>lat</code></td><td>float</td><td>✅</td>
+                                    <td>Latitude (-90 to 90)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>lon</code></td><td>float</td><td>✅</td>
+                                    <td>Longitude (-180 to 180)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>month</code></td><td>int</td><td>❌</td>
+                                    <td>Month (1-12). Defaults to current month</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="api-example">
+                        <h4>Example Request</h4>
+                        <pre class="code-block"><code>GET /api/predict?lat=28.6139&lon=77.2090&month=6</code></pre>
+                    </div>
+                    <div class="api-response">
+                        <h4>Example Response</h4>
+                        <pre class="code-block"><code>{
+  "location": { "latitude": 28.6139, "longitude": 77.209 },
+  "month": 6,
+  "month_name": "June",
+  "predictions": {
+    "temperature": { "value": 38.2, "unit": "°C", "feels_like": 37.1 },
+    "humidity": { "value": 45.3, "unit": "%" },
+    "wind_speed": { "value": 22.1, "unit": "km/h" },
+    "rain": { "prediction": "No Rain", "probability": 28.5, "unit": "%" }
+  },
+  "condition": { "text": "Hot & Sunny", "icon": "🔥" },
+  "additional": {
+    "dew_point": 27.3,
+    "uv_index": 8,
+    "visibility": 16.2,
+    "pressure": 1011.5
+  }
+}</code></pre>
+                    </div>
+
+                    <!-- Live Tester -->
+                    <div class="api-tester">
+                        <h4>Try It Live</h4>
+                        <div class="tester-inputs">
+                            <div class="tester-field">
+                                <label>Latitude</label>
+                                <input type="number" id="test-lat" value="28.6139" step="0.01">
+                            </div>
+                            <div class="tester-field">
+                                <label>Longitude</label>
+                                <input type="number" id="test-lon" value="77.2090" step="0.01">
+                            </div>
+                            <div class="tester-field">
+                                <label>Month</label>
+                                <input type="number" id="test-month" value="6" min="1" max="12">
+                            </div>
+                            <button class="search-btn" id="test-predict-btn">Send Request</button>
+                        </div>
+                        <pre class="code-block" id="test-predict-result"><code>Click "Send Request" to see a live response</code></pre>
+                    </div>
+                </div>
+
+                <!-- Forecast Endpoint -->
+                <div class="api-card glass-card">
+                    <div class="api-method get">GET</div>
+                    <h3 class="api-endpoint">/api/forecast</h3>
+                    <p class="api-desc">Get a 12-month weather forecast for a location. Returns temperature, humidity, wind speed, and rain probability for every month.</p>
+                    <div class="api-params">
+                        <h4>Parameters</h4>
+                        <table class="params-table">
+                            <thead>
+                                <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>lat</code></td><td>float</td><td>✅</td><td>Latitude (-90 to 90)</td></tr>
+                                <tr><td><code>lon</code></td><td>float</td><td>✅</td><td>Longitude (-180 to 180)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="api-example">
+                        <h4>Example Request</h4>
+                        <pre class="code-block"><code>GET /api/forecast?lat=40.7128&lon=-74.0060</code></pre>
+                    </div>
+                </div>
+
+                <!-- Model Info Endpoint -->
+                <div class="api-card glass-card">
+                    <div class="api-method get">GET</div>
+                    <h3 class="api-endpoint">/api/model-info</h3>
+                    <p class="api-desc">Get ML model details, performance metrics, feature information, and training configuration.</p>
+                    <div class="api-example">
+                        <h4>Example Request</h4>
+                        <pre class="code-block"><code>GET /api/model-info</code></pre>
+                    </div>
+
+                    <div class="api-tester">
+                        <h4>Try It Live</h4>
+                        <button class="search-btn" id="test-model-btn">Fetch Model Info</button>
+                        <pre class="code-block" id="test-model-result"><code>Click "Fetch Model Info" to see a live response</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand"><span class="footer-icon">⛅</span><span>WeatherAI</span></div>
+            <p class="footer-text">AI-powered weather forecasting using Random Forest models.</p>
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="/forecast.html">Forecast</a>
+                <a href="/annual.html">Annual</a>
+                <a href="/model-info.html">Models</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="shared.js"></script>
+    <script src="api-docs.js"></script>
+</body>
+
+</html>
