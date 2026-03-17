@@ -6,6 +6,8 @@ An intelligent weather prediction system using **Random Forest ML models** train
 ![Flask](https://img.shields.io/badge/Flask-3.1-green?logo=flask)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.6-orange?logo=scikit-learn)
 
+**[🌐 Live Demo Here](https://weather-forecasting-system-o3lu.onrender.com)**
+
 ## ✨ Features
 
 - 🌍 **Global Coverage** — Predicts weather for any latitude/longitude on Earth
