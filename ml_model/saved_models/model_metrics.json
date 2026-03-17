@@ -3,47 +3,47 @@
     "temperature": {
       "type": "regression",
       "target": "temperature",
-      "mae": 1.7784,
-      "rmse": 2.245,
-      "r2_score": 0.9439,
-      "n_estimators": 150,
-      "max_depth": 20,
-      "training_samples": 48000,
-      "test_samples": 12000
+      "mae": 1.918,
+      "rmse": 2.4529,
+      "r2_score": 0.9324,
+      "n_estimators": 50,
+      "max_depth": 12,
+      "training_samples": 24000,
+      "test_samples": 6000
     },
     "humidity": {
       "type": "regression",
       "target": "humidity",
-      "mae": 4.3045,
-      "rmse": 5.4088,
-      "r2_score": 0.8576,
-      "n_estimators": 150,
-      "max_depth": 20,
-      "training_samples": 48000,
-      "test_samples": 12000
+      "mae": 4.4997,
+      "rmse": 5.6608,
+      "r2_score": 0.8425,
+      "n_estimators": 50,
+      "max_depth": 12,
+      "training_samples": 24000,
+      "test_samples": 6000
     },
     "wind_speed": {
       "type": "regression",
       "target": "wind_speed",
-      "mae": 2.1101,
-      "rmse": 2.6457,
-      "r2_score": 0.5803,
-      "n_estimators": 150,
-      "max_depth": 20,
-      "training_samples": 48000,
-      "test_samples": 12000
+      "mae": 2.121,
+      "rmse": 2.6424,
+      "r2_score": 0.5817,
+      "n_estimators": 50,
+      "max_depth": 12,
+      "training_samples": 24000,
+      "test_samples": 6000
     },
     "rain": {
       "type": "classification",
       "target": "rain",
-      "accuracy": 0.7527,
-      "precision": 0.4361,
-      "recall": 0.1067,
-      "f1_score": 0.1714,
+      "accuracy": 0.7513,
+      "precision": 0.5243,
+      "recall": 0.0646,
+      "f1_score": 0.1151,
       "n_estimators": 150,
       "max_depth": 20,
-      "training_samples": 48000,
-      "test_samples": 12000
+      "training_samples": 24000,
+      "test_samples": 6000
     }
   },
   "features": {
@@ -79,9 +79,9 @@
     ]
   },
   "training_info": {
-    "total_samples": 60000,
-    "train_samples": 48000,
-    "test_samples": 12000,
+    "total_samples": 30000,
+    "train_samples": 24000,
+    "test_samples": 6000,
     "algorithm": "RandomForest",
     "framework": "scikit-learn"
   }
