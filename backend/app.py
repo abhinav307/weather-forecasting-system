@@ -14,6 +14,69 @@ from flask_cors import CORS
 import xgboost as xgb
 from sklearn.preprocessing import StandardScaler
 
+import requests as http_requests
+from collections import defaultdict
+
+EMPIRICAL_CACHE = {}
+
+def get_real_rainfall(lat, lon):
+    cache_key = f"{round(lat, 1)}_{round(lon, 1)}"
+    if cache_key in EMPIRICAL_CACHE:
+        return EMPIRICAL_CACHE[cache_key]
+
+    try:
+        params = {
+            'latitude': lat,
+            'longitude': lon,
+            'start_date': '2018-01-01',
+            'end_date': '2022-12-31',
+            'daily': 'precipitation_sum',
+            'timezone': 'auto'
+        }
+        r = http_requests.get('https://archive-api.open-meteo.com/v1/archive', params=params, timeout=2.5)
+        if r.status_code != 200:
+            return None
+            
+        data = r.json().get('daily', {})
+        dates = data.get('time', [])
+        prcp = data.get('precipitation_sum', [])
+        if not prcp: return None
+        
+        monthly_sums = defaultdict(list)
+        current_month = None
+        current_sum = 0
+        
+        for i, d in enumerate(dates):
+            if prcp[i] is None: continue
+            
+            dt = datetime.strptime(d, '%Y-%m-%d')
+            m_key = f"{dt.year}-{dt.month}"
+            
+            if current_month is None: current_month = m_key
+            
+            if m_key != current_month:
+                _, m = current_month.split('-')
+                monthly_sums[int(m)].append(current_sum)
+                current_month = m_key
+                current_sum = 0
+                
+            current_sum += prcp[i]
+            
+        if current_month:
+            _, m = current_month.split('-')
+            monthly_sums[int(m)].append(current_sum)
+            
+        averages = {}
+        for m in range(1, 13):
+            vals = monthly_sums.get(m, [0])
+            averages[m] = round(sum(vals)/max(1, len(vals)), 1)
+            
+        EMPIRICAL_CACHE[cache_key] = averages
+        return averages
+    except Exception as e:
+        print("Empirical fetch failed:", e)
+        return None
+
 # ── Paths ──────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(BASE_DIR)
@@ -596,14 +659,19 @@ def predict():
         model_rain = float(models['rain'].predict_proba(X)[0][1])
         # 85% real data, 15% model adjustment
         rain_probability = 0.85 * knn_rain + 0.15 * model_rain
-        # Rainfall in mm: Hybrid ML + Global Mathematical Weather Model
-        knn_rainfall_mm = knn.get('rainfall_mm', 0.0)
-        model_rainfall_mm = float(models['rainfall_mm'].predict(X)[0])
-        ml_rainfall_mm = max(0.0, 0.5 * knn_rainfall_mm + 0.5 * model_rainfall_mm)
-        
-        # Superimpose continuous ITCZ sine-wave to organically fix gaps in ML interpolation
-        theory_rainfall_mm = calculate_theoretical_rain(lat, lon, month)
-        rainfall_mm = 0.5 * ml_rainfall_mm + 0.5 * theory_rainfall_mm
+        # Try to pull 100% verified historical rain from archive-api
+        empirical_data = get_real_rainfall(lat, lon)
+        if empirical_data and month in empirical_data:
+            rainfall_mm = empirical_data[month]
+        else:
+            # Rainfall in mm: Hybrid ML + Global Mathematical Weather Model
+            knn_rainfall_mm = knn.get('rainfall_mm', 0.0)
+            model_rainfall_mm = float(models['rainfall_mm'].predict(X)[0])
+            ml_rainfall_mm = max(0.0, 0.5 * knn_rainfall_mm + 0.5 * model_rainfall_mm)
+            
+            # Superimpose continuous ITCZ sine-wave to organically fix gaps in ML interpolation
+            theory_rainfall_mm = calculate_theoretical_rain(lat, lon, month)
+            rainfall_mm = 0.5 * ml_rainfall_mm + 0.5 * theory_rainfall_mm
 
         # Organically map Rain Chance directly from Rain Volume to avoid "step functions"
         rain_probability = get_theoretical_prob(rainfall_mm)
@@ -766,14 +834,18 @@ def forecast():
             model_rain = float(models['rain'].predict_proba(X)[0][1])
             rain_prob = 0.85 * knn_rain + 0.15 * model_rain
 
-            # Rainfall mm: Hybrid ML + Global Mathematical Weather Model
-            knn_rainfall_mm = knn.get('rainfall_mm', 0.0)
-            model_rainfall_mm = float(models['rainfall_mm'].predict(X)[0])
-            ml_rainfall_mm = max(0.0, 0.5 * knn_rainfall_mm + 0.5 * model_rainfall_mm)
-            
-            # Superimpose continuous ITCZ sine-wave
-            theory_rainfall_mm = calculate_theoretical_rain(lat, lon, m)
-            rainfall_mm = 0.5 * ml_rainfall_mm + 0.5 * theory_rainfall_mm
+            empirical_data = get_real_rainfall(lat, lon)
+            if empirical_data and m in empirical_data:
+                rainfall_mm = empirical_data[m]
+            else:
+                # Rainfall mm: Hybrid ML + Global Mathematical Weather Model
+                knn_rainfall_mm = knn.get('rainfall_mm', 0.0)
+                model_rainfall_mm = float(models['rainfall_mm'].predict(X)[0])
+                ml_rainfall_mm = max(0.0, 0.5 * knn_rainfall_mm + 0.5 * model_rainfall_mm)
+                
+                # Superimpose continuous ITCZ sine-wave
+                theory_rainfall_mm = calculate_theoretical_rain(lat, lon, m)
+                rainfall_mm = 0.5 * ml_rainfall_mm + 0.5 * theory_rainfall_mm
 
             # Organically map Rain Chance directly from Rain Volume (no artificial blocks)
             rain_prob = get_theoretical_prob(rainfall_mm)
