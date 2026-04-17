@@ -3,47 +3,51 @@
     "temperature": {
       "type": "regression",
       "target": "temperature",
-      "mae": 1.918,
-      "rmse": 2.4529,
-      "r2_score": 0.9324,
-      "n_estimators": 50,
-      "max_depth": 12,
-      "training_samples": 24000,
-      "test_samples": 6000
+      "mae": 1.8661,
+      "rmse": 2.6067,
+      "r2_score": 0.9352,
+      "algorithm": "XGBoost",
+      "n_estimators": 300,
+      "max_depth": 8,
+      "training_samples": 281968,
+      "test_samples": 70492
     },
     "humidity": {
       "type": "regression",
       "target": "humidity",
-      "mae": 4.4997,
-      "rmse": 5.6608,
-      "r2_score": 0.8425,
-      "n_estimators": 50,
-      "max_depth": 12,
-      "training_samples": 24000,
-      "test_samples": 6000
+      "mae": 5.2237,
+      "rmse": 6.9748,
+      "r2_score": 0.8902,
+      "algorithm": "XGBoost",
+      "n_estimators": 300,
+      "max_depth": 8,
+      "training_samples": 281968,
+      "test_samples": 70492
     },
     "wind_speed": {
       "type": "regression",
       "target": "wind_speed",
-      "mae": 2.121,
-      "rmse": 2.6424,
-      "r2_score": 0.5817,
-      "n_estimators": 50,
-      "max_depth": 12,
-      "training_samples": 24000,
-      "test_samples": 6000
+      "mae": 3.4363,
+      "rmse": 4.6141,
+      "r2_score": 0.629,
+      "algorithm": "XGBoost",
+      "n_estimators": 300,
+      "max_depth": 8,
+      "training_samples": 281968,
+      "test_samples": 70492
     },
     "rain": {
       "type": "classification",
       "target": "rain",
-      "accuracy": 0.7513,
-      "precision": 0.5243,
-      "recall": 0.0646,
-      "f1_score": 0.1151,
-      "n_estimators": 150,
-      "max_depth": 20,
-      "training_samples": 24000,
-      "test_samples": 6000
+      "accuracy": 0.7024,
+      "precision": 0.4723,
+      "recall": 0.7598,
+      "f1_score": 0.5825,
+      "algorithm": "XGBoost",
+      "n_estimators": 300,
+      "max_depth": 8,
+      "training_samples": 281968,
+      "test_samples": 70492
     }
   },
   "features": {
@@ -59,30 +63,31 @@
       "day_sin",
       "day_cos",
       "abs_latitude",
-      "is_northern"
+      "is_northern",
+      "lat_x_month_sin",
+      "lat_x_month_cos",
+      "lon_x_month_sin",
+      "lon_x_month_cos",
+      "lat_band",
+      "month_f",
+      "knn_temp",
+      "knn_hum",
+      "knn_wind",
+      "knn_rain"
     ],
-    "original_features": [
-      "latitude",
-      "longitude",
-      "month",
-      "day_of_year",
-      "elevation",
-      "distance_to_coast"
-    ],
-    "engineered_features": [
-      "month_sin",
-      "month_cos",
-      "day_sin",
-      "day_cos",
-      "abs_latitude",
-      "is_northern"
+    "knn_features": [
+      "knn_temp",
+      "knn_hum",
+      "knn_wind",
+      "knn_rain"
     ]
   },
   "training_info": {
-    "total_samples": 30000,
-    "train_samples": 24000,
-    "test_samples": 6000,
-    "algorithm": "RandomForest",
-    "framework": "scikit-learn"
+    "total_samples": 352460,
+    "train_samples": 281968,
+    "test_samples": 70492,
+    "algorithm": "XGBoost + KNN Interpolation (Hybrid)",
+    "framework": "xgboost + scikit-learn",
+    "architecture": "KNN climate-normal interpolation as features, XGBoost for refinement based on local geography"
   }
 }

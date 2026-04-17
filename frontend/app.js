@@ -192,7 +192,8 @@ function displayResults(data) {
 
     // Rain card
     animateValue('rain-value', predictions.rain.probability);
-    document.getElementById('rain-prediction').textContent = predictions.rain.prediction;
+    const rainfallMm = predictions.rain.rainfall_mm || 0;
+    document.getElementById('rain-prediction').textContent = `${rainfallMm} mm`;
     animateBar('rain-bar', predictions.rain.probability);
 
     // Humidity card

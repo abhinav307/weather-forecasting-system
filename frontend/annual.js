@@ -154,6 +154,7 @@ function displayMonthlyTable(forecasts) {
             <td>${f.humidity}%</td>
             <td>${f.wind_speed} km/h</td>
             <td>${f.rain_probability}%</td>
+            <td>${f.rainfall_mm || 0} mm</td>
         </tr>
     `).join('');
 }

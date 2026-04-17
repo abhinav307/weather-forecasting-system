@@ -7,6 +7,7 @@ import os
 import json
 import numpy as np
 import joblib
+import requests as http_requests
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -22,7 +23,7 @@ app = Flask(__name__, static_folder=FRONTEND_DIR)
 CORS(app)
 
 # ── Load Models ────────────────────────────────────────────────────
-print("🔄 Loading ML models...")
+print("[*] Loading ML models...")
 models = {
     'temperature': joblib.load(os.path.join(MODELS_DIR, 'temperature_model.joblib')),
     'humidity': joblib.load(os.path.join(MODELS_DIR, 'humidity_model.joblib')),
@@ -34,7 +35,20 @@ scaler = joblib.load(os.path.join(MODELS_DIR, 'scaler.joblib'))
 with open(os.path.join(MODELS_DIR, 'model_metrics.json'), 'r') as f:
     model_metrics = json.load(f)
 
-print("✅ All models loaded successfully!")
+# Load climate normals for KNN interpolation
+normals_path = os.path.join(MODELS_DIR, 'climate_normals.json')
+climate_normals = {}
+if os.path.exists(normals_path):
+    with open(normals_path, 'r') as f:
+        raw = json.load(f)
+    for key, monthly in raw.items():
+        lat, lon = map(float, key.split(','))
+        climate_normals[(lat, lon)] = {int(m): v for m, v in monthly.items()}
+    print(f"[OK] Loaded climate normals for {len(climate_normals)} cities")
+else:
+    print("[WARN] No climate normals found, KNN interpolation disabled")
+
+print("[OK] All models loaded successfully!")
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -251,69 +265,191 @@ def validate_weather(temp, humidity, wind, rain_prob, feels_like, dew_point):
 
 
 
-def estimate_elevation(lat, lon):
-    """Estimate elevation matching the training data generator."""
-    # Himalayas (narrow band — NOT all of north India)
-    if 27 <= lat <= 36 and 75 <= lon <= 100:
-        if lat >= 32:
-            return 2500
-        elif lat >= 30:
-            return 800
-        else:
-            return 250  # Plains: Delhi, Lucknow, Jaipur, etc.
-    # Alps
-    if 45 <= lat <= 48 and 5 <= lon <= 15:
-        return 1500
-    # Andes
-    if -35 <= lat <= 10 and -80 <= lon <= -65:
-        return 1500
-    # Rockies
-    if 35 <= lat <= 50 and -120 <= lon <= -105:
-        return 1800
-    # Tibet
-    if 28 <= lat <= 38 and 78 <= lon <= 100:
-        return 4000
-    # East African highlands
-    if -5 <= lat <= 5 and 30 <= lon <= 40:
-        return 1200
-    return 200  # Default lowland
+# Cache elevation lookups — avoids repeated API calls for same location
+_elevation_cache = {}
 
+def estimate_elevation(lat, lon):
+    """Get real elevation from Open-Meteo API, with LRU cache + fallback."""
+    # Round to 2 decimals for cache key (~1km precision)
+    cache_key = (round(lat, 2), round(lon, 2))
+    if cache_key in _elevation_cache:
+        return _elevation_cache[cache_key]
+
+    try:
+        r = http_requests.get(
+            f'https://api.open-meteo.com/v1/elevation?latitude={lat}&longitude={lon}',
+            timeout=1.5
+        )
+        if r.status_code == 200:
+            elev = max(0, r.json()['elevation'][0])
+            _elevation_cache[cache_key] = elev
+            return elev
+    except:
+        pass
+    # Fallback: crude estimation
+    abs_lat = abs(lat)
+    if 27 <= lat <= 36 and 75 <= lon <= 100:
+        if lat >= 32: result = 2500
+        elif lat >= 30: result = 800
+        else: result = 250
+    elif 45 <= lat <= 48 and 5 <= lon <= 15: result = 1500
+    elif -35 <= lat <= 10 and -80 <= lon <= -65: result = 1500
+    elif 35 <= lat <= 50 and -120 <= lon <= -105: result = 1800
+    elif 28 <= lat <= 38 and 78 <= lon <= 100: result = 4000
+    elif -5 <= lat <= 5 and 30 <= lon <= 40: result = 1200
+    else: result = 200
+    _elevation_cache[cache_key] = result
+    return result
+
+
+_coast_cache = {}
 
 def estimate_coast_distance(lat, lon):
-    """Estimate coast distance matching the training data generator."""
+    """Compute distance to nearest coast using haversine formula (cached)."""
+    cache_key = (round(lat, 2), round(lon, 2))
+    if cache_key in _coast_cache:
+        return _coast_cache[cache_key]
+
+    from math import radians, cos, sin, asin, sqrt
     coast_points = [
-        (19.1, 72.9), (13.1, 80.3), (51.5, -0.1), (40.7, -74.0),
-        (34.1, -118.2), (35.7, 139.7), (-33.9, 151.2), (25.3, 55.3),
-        (-22.9, -43.2), (1.3, 103.8), (-6.2, 106.8), (6.5, 3.4),
-        (24.9, 67.0), (31.2, 121.5), (13.8, 100.5),
+        # Africa
+        (14.7, -17.5), (6.5, 3.4), (5.6, -0.2), (-6.8, 39.2), (-34.0, 18.4),
+        (33.6, -7.6), (36.8, 10.2), (30.0, 31.2), (4.0, 9.8), (0.4, 9.5),
+        (-26.0, 32.6), (-1.3, 36.8),
+        # Europe
+        (51.5, -0.1), (48.9, 2.3), (41.0, 29.0), (38.7, -9.1), (37.9, 23.7),
+        (59.9, 10.8), (60.2, 25.0), (64.1, -22.0), (53.3, -6.3), (55.7, 12.6),
+        (43.3, 5.4), (40.4, -3.7), (41.9, 12.5), (45.4, 12.3),
+        # Asia
+        (19.1, 72.9), (13.1, 80.3), (22.3, 114.2), (31.2, 121.5), (35.7, 139.7),
+        (37.6, 127.0), (25.0, 121.5), (1.3, 103.8), (-6.2, 106.8), (13.8, 100.5),
+        (14.6, 121.0), (10.8, 106.6), (6.9, 79.9), (21.0, 105.8), (3.1, 101.7),
+        (25.2, 55.3), (23.6, 58.4), (24.9, 67.0), (23.8, 90.4),
+        # Americas
+        (40.7, -74.0), (25.8, -80.2), (34.1, -118.2), (37.8, -122.4), (47.6, -122.3),
+        (49.3, -123.1), (61.2, -150.0), (-22.9, -43.2), (-23.6, -46.6), (-34.6, -58.4),
+        (-33.4, -70.7), (-12.0, -77.0), (10.5, -67.0), (23.1, -82.4), (29.8, -95.4),
+        # Oceania
+        (-33.9, 151.2), (-37.8, 145.0), (-27.5, 153.0), (-31.9, 115.9), (-12.5, 130.8),
+        (-36.8, 174.8), (-41.3, 174.8),
+        # Middle East
+        (25.3, 51.5), (31.8, 35.2), (32.1, 34.8),
+        # Arctic
+        (69.6, 19.0), (69.0, 33.1), (63.7, -68.5),
     ]
-    min_dist = 9999
+    min_dist = 99999
+    lat1 = radians(lat)
+    lon1 = radians(lon)
     for clat, clon in coast_points:
-        d = np.sqrt((lat - clat)**2 + ((lon - clon) * np.cos(np.radians(lat)))**2)
+        lat2, lon2 = radians(clat), radians(clon)
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        d = 6371 * 2 * asin(sqrt(a))
         min_dist = min(min_dist, d)
-    coast_km = min_dist * 111
-    return min(coast_km, 1500)
+    result = min(min_dist, 2000)
+    _coast_cache[cache_key] = result
+    return result
+
+
+def knn_interpolate(lat, lon, month, elevation, k=5):
+    """
+    Find K nearest training cities and compute inverse-distance-weighted
+    climate normals for the given month. Applies elevation lapse correction.
+    """
+    from math import radians, cos, sin, asin, sqrt
+
+    if not climate_normals:
+        return {'temperature': 20, 'humidity': 50, 'wind_speed': 10, 'rain_prob': 20}
+
+    distances = []
+    for (clat, clon), monthly in climate_normals.items():
+        if month not in monthly:
+            continue
+        lat1, lon1_ = radians(lat), radians(lon)
+        lat2, lon2_ = radians(clat), radians(clon)
+        dlat = lat2 - lat1
+        dlon = lon2_ - lon1_
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        d = 6371 * 2 * asin(sqrt(a))
+        d = max(d, 1.0)
+        distances.append((d, clat, clon, monthly[month]))
+
+    distances.sort(key=lambda x: x[0])
+    nearest = distances[:k]
+
+    if not nearest:
+        return {'temperature': 20, 'humidity': 50, 'wind_speed': 10, 'rain_prob': 20}
+
+    # Inverse-distance weighting
+    weights = [1.0 / (d ** 2) for d, _, _, _ in nearest]
+    total_w = sum(weights)
+    weights = [w / total_w for w in weights]
+
+    result = {}
+    for key in ['temperature', 'humidity', 'wind_speed', 'rain_prob']:
+        result[key] = sum(w * data[key] for w, (_, _, _, data) in zip(weights, nearest))
+
+    # Interpolate rainfall_mm and mean_wind_max if available in normals
+    for key in ['rainfall_mm', 'mean_wind_max']:
+        vals = [(w, data.get(key, 0)) for w, (_, _, _, data) in zip(weights, nearest)]
+        if any(v > 0 for _, v in vals):
+            result[key] = sum(w * v for w, v in vals)
+        else:
+            result[key] = 0.0
+
+    # Temperature lapse rate correction
+    weighted_elev = sum(w * data['elevation'] for w, (_, _, _, data) in zip(weights, nearest))
+    elev_diff = elevation - weighted_elev
+    result['temperature'] -= 6.5 * (elev_diff / 1000.0)
+
+    return result
 
 
 def prepare_features(lat, lon, month):
-    """Prepare the feature vector for prediction."""
+    """Prepare the feature vector for prediction (with KNN interpolation)."""
     day_of_year = (month - 1) * 30 + 15  # mid-month approximation
-    
+
     elevation = estimate_elevation(lat, lon)
     distance_to_coast = estimate_coast_distance(lat, lon)
-    
-    # Build feature vector matching training features
+
+    # Cyclical encodings
+    month_sin = np.sin(2 * np.pi * month / 12)
+    month_cos = np.cos(2 * np.pi * month / 12)
+    day_sin = np.sin(2 * np.pi * day_of_year / 365)
+    day_cos = np.cos(2 * np.pi * day_of_year / 365)
+    abs_lat = abs(lat)
+    is_northern = 1 if lat >= 0 else 0
+
+    # Interaction features
+    lat_x_month_sin = lat * month_sin
+    lat_x_month_cos = lat * month_cos
+    lon_x_month_sin = lon * month_sin
+    lon_x_month_cos = lon * month_cos
+
+    # Climate zone band
+    if abs_lat <= 10: lat_band = 0
+    elif abs_lat <= 23.5: lat_band = 1
+    elif abs_lat <= 35: lat_band = 2
+    elif abs_lat <= 55: lat_band = 3
+    else: lat_band = 4
+
+    month_f = float(month)
+
+    # KNN interpolation — brings real nearby city data into the model
+    knn = knn_interpolate(lat, lon, month, elevation, k=5)
+
+    # Build feature vector matching training features (22 features total)
     features = np.array([[
         lat, lon, month, day_of_year, elevation, distance_to_coast,
-        # Engineered features
-        np.sin(2 * np.pi * month / 12),      # month_sin
-        np.cos(2 * np.pi * month / 12),      # month_cos
-        np.sin(2 * np.pi * day_of_year / 365),  # day_sin
-        np.cos(2 * np.pi * day_of_year / 365),  # day_cos
-        abs(lat),                              # abs_latitude
-        1 if lat >= 0 else 0                   # is_northern
+        month_sin, month_cos, day_sin, day_cos,
+        abs_lat, is_northern,
+        lat_x_month_sin, lat_x_month_cos,
+        lon_x_month_sin, lon_x_month_cos,
+        lat_band, month_f,
+        knn['temperature'], knn['humidity'], knn['wind_speed'], knn['rain_prob'],
     ]])
-    
+
     return scaler.transform(features)
 
 
@@ -335,15 +471,46 @@ def predict():
         if not (1 <= month <= 12):
             return jsonify({'error': 'Month must be between 1 and 12'}), 400
         
-        # Prepare features
+        # Prepare features (also computes KNN internally)
+        elevation = estimate_elevation(lat, lon)
         X = prepare_features(lat, lon, month)
-        
-        # Make predictions
+
+        # Reuse KNN data (already computed inside prepare_features)
+        knn = knn_interpolate(lat, lon, month, elevation, k=5)
+
+        # ── Hybrid prediction approach ──
+        # Temperature & Humidity: XGBoost model (R² > 0.88, accurate)
         temperature = float(models['temperature'].predict(X)[0])
         humidity = float(models['humidity'].predict(X)[0])
-        wind_speed = float(models['wind_speed'].predict(X)[0])
-        rain_prediction = int(models['rain'].predict(X)[0])
-        rain_probability = float(models['rain'].predict_proba(X)[0][1])
+
+        # Wind: Use real mean wind data from climate normals
+        # mean_wind_max = average of daily max wind speeds from Open-Meteo
+        # To get daily MEAN wind: divide by gust-to-mean ratio (~2.0-2.5)
+        knn_mean_max = knn.get('mean_wind_max', 0)
+        if knn_mean_max > 0:
+            # Real data: mean_wind_max is the average daily max → divide by 2.0
+            knn_wind_avg = knn_mean_max / 2.0
+        else:
+            # Fallback to old wind_speed from normals
+            knn_wind_avg = knn['wind_speed'] / 2.3
+        model_wind_avg = float(models['wind_speed'].predict(X)[0]) / 2.3
+        wind_speed = 0.75 * knn_wind_avg + 0.25 * model_wind_avg
+
+        # Rain: Use KNN rain probability from real precipitation records
+        # KNN rain_prob is actual historical rain frequency — ground truth
+        knn_rain = knn['rain_prob'] / 100.0
+        model_rain = float(models['rain'].predict_proba(X)[0][1])
+        # 85% real data, 15% model adjustment
+        rain_probability = 0.85 * knn_rain + 0.15 * model_rain
+        rain_prediction = 1 if rain_probability > 0.5 else 0
+
+        # Rainfall in mm: interpolate from nearby city climate normals
+        rainfall_mm = knn.get('rainfall_mm', 0.0)
+        if rainfall_mm == 0.0 and rain_probability > 0.05:
+            # Fallback estimate: rain_prob × days_in_month × avg_mm_per_rain_day
+            days = 30
+            avg_mm = 6.0 if abs(lat) < 23.5 else 4.0 if abs(lat) < 45 else 3.0
+            rainfall_mm = rain_probability * days * avg_mm
         
         # Determine weather condition
         if rain_probability > 0.7:
@@ -405,6 +572,7 @@ def predict():
                 'rain': {
                     'prediction': 'Rain' if rain_prediction else 'No Rain',
                     'probability': round(rain_probability * 100, 1),
+                    'rainfall_mm': round(max(0, rainfall_mm), 1),
                     'unit': '%'
                 }
             },
@@ -480,18 +648,41 @@ def forecast():
         forecasts = []
         for m in range(1, 13):
             X = prepare_features(lat, lon, m)
+            elevation = estimate_elevation(lat, lon)
+            knn = knn_interpolate(lat, lon, m, elevation, k=5)
+
             temp = float(models['temperature'].predict(X)[0])
             hum = float(models['humidity'].predict(X)[0])
-            wind = float(models['wind_speed'].predict(X)[0])
-            rain_prob = float(models['rain'].predict_proba(X)[0][1])
-            
+
+            # Wind: KNN-based (same as predict endpoint)
+            knn_mean_max = knn.get('mean_wind_max', 0)
+            if knn_mean_max > 0:
+                knn_wind_avg = knn_mean_max / 2.0
+            else:
+                knn_wind_avg = knn['wind_speed'] / 2.3
+            model_wind_avg = float(models['wind_speed'].predict(X)[0]) / 2.3
+            wind = 0.75 * knn_wind_avg + 0.25 * model_wind_avg
+
+            # Rain: KNN-based (same as predict endpoint)
+            knn_rain = knn['rain_prob'] / 100.0
+            model_rain = float(models['rain'].predict_proba(X)[0][1])
+            rain_prob = 0.85 * knn_rain + 0.15 * model_rain
+
+            # Rainfall mm
+            rainfall_mm = knn.get('rainfall_mm', 0.0)
+            if rainfall_mm == 0.0 and rain_prob > 0.05:
+                days = 30
+                avg_mm = 6.0 if abs(lat) < 23.5 else 4.0 if abs(lat) < 45 else 3.0
+                rainfall_mm = rain_prob * days * avg_mm
+
             forecasts.append({
                 'month': m,
                 'month_name': month_names[m - 1],
                 'temperature': round(temp, 1),
                 'humidity': round(max(5, min(100, hum)), 1),
                 'wind_speed': round(max(0, wind), 1),
-                'rain_probability': round(rain_prob * 100, 1)
+                'rain_probability': round(rain_prob * 100, 1),
+                'rainfall_mm': round(max(0, rainfall_mm), 1)
             })
         
         return jsonify({
@@ -520,11 +711,11 @@ def serve_static(path):
 # ── Main ───────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
-    print("\n🌦️  Weather Forecasting API")
+    print("\n[*] Weather Forecasting API")
     print("=" * 40)
-    print("📍 Server:  http://localhost:5000")
-    print("📡 API:     http://localhost:5000/api/predict?lat=28.6&lon=77.2&month=6")
-    print("📊 Info:    http://localhost:5000/api/model-info")
-    print("🌐 UI:      http://localhost:5000")
+    print("Server:  http://localhost:5000")
+    print("API:     http://localhost:5000/api/predict?lat=28.6&lon=77.2&month=6")
+    print("Info:    http://localhost:5000/api/model-info")
+    print("UI:      http://localhost:5000")
     print("=" * 40)
     app.run(debug=True, port=5000)

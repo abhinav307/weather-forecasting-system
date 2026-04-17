@@ -123,7 +123,8 @@ function displayResults(data) {
     animateBar('temp-bar', mapRange(predictions.temperature.value, -30, 50, 0, 100));
 
     animateValue('rain-value', predictions.rain.probability);
-    document.getElementById('rain-prediction').textContent = predictions.rain.prediction;
+    const rainfallMm = predictions.rain.rainfall_mm || 0;
+    document.getElementById('rain-prediction').textContent = `${rainfallMm} mm`;
     animateBar('rain-bar', predictions.rain.probability);
 
     animateValue('humidity-value', predictions.humidity.value);
