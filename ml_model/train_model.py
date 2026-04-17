@@ -390,9 +390,14 @@ def main():
 
     all_metrics['rain'] = metrics
 
-    # Save scaler
-    scaler_path = os.path.join(MODELS_DIR, 'scaler.joblib')
-    joblib.dump(scaler, scaler_path)
+    # Save scaler as JSON for cross-platform stability
+    scaler_data = {
+        'mean_': scaler.mean_.tolist(),
+        'scale_': scaler.scale_.tolist()
+    }
+    scaler_path = os.path.join(MODELS_DIR, 'scaler.json')
+    with open(scaler_path, 'w') as f:
+        json.dump(scaler_data, f)
     print(f"\n  Scaler saved -> {scaler_path}")
 
     # Save metrics

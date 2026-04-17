@@ -18,7 +18,7 @@ def main():
         'humidity_model.json',
         'wind_speed_model.json',
         'rain_model.json',
-        'scaler.joblib',
+        'scaler.json',
         'model_metrics.json'
     ]
     

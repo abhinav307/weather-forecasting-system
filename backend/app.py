@@ -12,6 +12,7 @@ from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import xgboost as xgb
+from sklearn.preprocessing import StandardScaler
 
 # ── Paths ──────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -43,7 +44,13 @@ models = {
     'wind_speed': wind_model,
     'rain': rain_model,
 }
-scaler = joblib.load(os.path.join(MODELS_DIR, 'scaler.joblib'))
+
+with open(os.path.join(MODELS_DIR, 'scaler.json'), 'r') as f:
+    scaler_data = json.load(f)
+scaler = StandardScaler()
+scaler.mean_ = np.array(scaler_data['mean_'])
+scaler.scale_ = np.array(scaler_data['scale_'])
+scaler.var_ = scaler.scale_ ** 2
 
 with open(os.path.join(MODELS_DIR, 'model_metrics.json'), 'r') as f:
     model_metrics = json.load(f)
