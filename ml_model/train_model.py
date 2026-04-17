@@ -370,8 +370,8 @@ def main():
             X_train_scaled, X_test_scaled, y_train, y_test, target
         )
 
-        model_path = os.path.join(MODELS_DIR, f'{target}_model.joblib')
-        joblib.dump(model, model_path)
+        model_path = os.path.join(MODELS_DIR, f'{target}_model.json')
+        model.save_model(model_path)
         print(f"  Saved -> {model_path}")
 
         all_metrics[target] = metrics
@@ -384,8 +384,8 @@ def main():
         X_train_scaled, X_test_scaled, y_train, y_test
     )
 
-    model_path = os.path.join(MODELS_DIR, 'rain_model.joblib')
-    joblib.dump(model, model_path)
+    model_path = os.path.join(MODELS_DIR, 'rain_model.json')
+    model.save_model(model_path)
     print(f"  Saved -> {model_path}")
 
     all_metrics['rain'] = metrics

@@ -14,10 +14,10 @@ MODELS_DIR = os.path.join(PROJECT_DIR, 'ml_model', 'saved_models')
 def main():
     # Check if models already exist
     required_files = [
-        'temperature_model.joblib',
-        'humidity_model.joblib',
-        'wind_speed_model.joblib',
-        'rain_model.joblib',
+        'temperature_model.json',
+        'humidity_model.json',
+        'wind_speed_model.json',
+        'rain_model.json',
         'scaler.joblib',
         'model_metrics.json'
     ]

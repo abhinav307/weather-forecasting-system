@@ -11,6 +11,7 @@ import requests as http_requests
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+import xgboost as xgb
 
 # ── Paths ──────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,11 +25,23 @@ CORS(app)
 
 # ── Load Models ────────────────────────────────────────────────────
 print("[*] Loading ML models...")
+temp_model = xgb.XGBRegressor()
+temp_model.load_model(os.path.join(MODELS_DIR, 'temperature_model.json'))
+
+hum_model = xgb.XGBRegressor()
+hum_model.load_model(os.path.join(MODELS_DIR, 'humidity_model.json'))
+
+wind_model = xgb.XGBRegressor()
+wind_model.load_model(os.path.join(MODELS_DIR, 'wind_speed_model.json'))
+
+rain_model = xgb.XGBClassifier()
+rain_model.load_model(os.path.join(MODELS_DIR, 'rain_model.json'))
+
 models = {
-    'temperature': joblib.load(os.path.join(MODELS_DIR, 'temperature_model.joblib')),
-    'humidity': joblib.load(os.path.join(MODELS_DIR, 'humidity_model.joblib')),
-    'wind_speed': joblib.load(os.path.join(MODELS_DIR, 'wind_speed_model.joblib')),
-    'rain': joblib.load(os.path.join(MODELS_DIR, 'rain_model.joblib')),
+    'temperature': temp_model,
+    'humidity': hum_model,
+    'wind_speed': wind_model,
+    'rain': rain_model,
 }
 scaler = joblib.load(os.path.join(MODELS_DIR, 'scaler.joblib'))
 

@@ -20,9 +20,9 @@ ml_model/weather_data.csv
 ml_model/global_weather_dataset.csv
 
 # Large model files (regenerated during build, but needed for Vercel deployment)
-!ml_model/saved_models/*.joblib
+!ml_model/saved_models/*.json
+!ml_model/saved_models/scaler.joblib
 !ml_model/saved_models/.gitkeep
-!ml_model/saved_models/model_metrics.json
 
 # Temporary files
 test_weather.py
