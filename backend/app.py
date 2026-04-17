@@ -38,11 +38,15 @@ wind_model.load_model(os.path.join(MODELS_DIR, 'wind_speed_model.json'))
 rain_model = xgb.XGBClassifier()
 rain_model.load_model(os.path.join(MODELS_DIR, 'rain_model.json'))
 
+rainfall_mm_model = xgb.XGBRegressor()
+rainfall_mm_model.load_model(os.path.join(MODELS_DIR, 'rainfall_mm_model.json'))
+
 models = {
     'temperature': temp_model,
     'humidity': hum_model,
     'wind_speed': wind_model,
     'rain': rain_model,
+    'rainfall_mm': rainfall_mm_model
 }
 
 with open(os.path.join(MODELS_DIR, 'scaler.json'), 'r') as f:
@@ -475,7 +479,7 @@ def prepare_features(lat, lon, month):
     # KNN interpolation — brings real nearby city data into the model
     knn = knn_interpolate(lat, lon, month, elevation, k=5)
 
-    # Build feature vector matching training features (22 features total)
+    # Build feature vector matching training features (23 features total)
     features = np.array([[
         lat, lon, month, day_of_year, elevation, distance_to_coast,
         month_sin, month_cos, day_sin, day_cos,
@@ -483,7 +487,7 @@ def prepare_features(lat, lon, month):
         lat_x_month_sin, lat_x_month_cos,
         lon_x_month_sin, lon_x_month_cos,
         lat_band, month_f,
-        knn['temperature'], knn['humidity'], knn['wind_speed'], knn['rain_prob'],
+        knn['temperature'], knn['humidity'], knn['wind_speed'], knn['rain_prob'], knn.get('rainfall_mm', 0.0)
     ]])
 
     return scaler.transform(features)
@@ -540,8 +544,13 @@ def predict():
         rain_probability = 0.85 * knn_rain + 0.15 * model_rain
         rain_prediction = 1 if rain_probability > 0.5 else 0
 
-        # Rainfall in mm: interpolate from nearby city climate normals
-        rainfall_mm = knn.get('rainfall_mm', 0.0)
+        # Rainfall in mm: Hybrid approach matching annual endpoint
+        knn_rainfall_mm = knn.get('rainfall_mm', 0.0)
+        model_rainfall_mm = float(models['rainfall_mm'].predict(X)[0])
+        
+        # Desert/Drought safeguard: XGBoost captures regional aridity, KNN captures local average
+        rainfall_mm = max(0.0, 0.5 * knn_rainfall_mm + 0.5 * model_rainfall_mm)
+        
         if rainfall_mm == 0.0 and rain_probability > 0.05:
             # Fallback estimate: rain_prob × days_in_month × avg_mm_per_rain_day
             days = 30
@@ -704,8 +713,14 @@ def forecast():
             model_rain = float(models['rain'].predict_proba(X)[0][1])
             rain_prob = 0.85 * knn_rain + 0.15 * model_rain
 
-            # Rainfall mm
-            rainfall_mm = knn.get('rainfall_mm', 0.0)
+            # Rainfall mm: Hybrid approach (XGBoost now supports rainfall)
+            knn_rainfall_mm = knn.get('rainfall_mm', 0.0)
+            model_rainfall_mm = float(models['rainfall_mm'].predict(X)[0])
+            
+            # Desert/Drought safeguard: XGBoost captures regional aridity, KNN captures local average
+            # We trust XGBoost 50% for magnitude, and KNN 50% for base scaling
+            rainfall_mm = max(0.0, 0.5 * knn_rainfall_mm + 0.5 * model_rainfall_mm)
+            
             if rainfall_mm == 0.0 and rain_prob > 0.05:
                 days = 30
                 avg_mm = 6.0 if abs(lat) < 23.5 else 4.0 if abs(lat) < 45 else 3.0

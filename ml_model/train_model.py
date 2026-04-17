@@ -124,6 +124,7 @@ def add_knn_features(df, normals, k=5):
     knn_hum = np.zeros(len(df))
     knn_wind = np.zeros(len(df))
     knn_rain = np.zeros(len(df))
+    knn_rainfall_mm = np.zeros(len(df))
 
     # Group by city for efficiency
     city_groups = df.groupby(['latitude', 'longitude']).groups
@@ -148,11 +149,13 @@ def add_knn_features(df, normals, k=5):
             knn_hum[idx] = result['humidity']
             knn_wind[idx] = result['wind_speed']
             knn_rain[idx] = result['rain_prob']
+            knn_rainfall_mm[idx] = result.get('rainfall_mm', 0.0)
 
     df['knn_temp'] = knn_temp
     df['knn_hum'] = knn_hum
     df['knn_wind'] = knn_wind
     df['knn_rain'] = knn_rain
+    df['knn_rainfall_mm'] = knn_rainfall_mm
 
     print("   KNN features added")
     return df
@@ -207,7 +210,7 @@ def get_feature_columns():
         'lon_x_month_sin', 'lon_x_month_cos',
         'lat_band', 'month_f',
         # KNN interpolation features (KEY — brings real nearby data into model)
-        'knn_temp', 'knn_hum', 'knn_wind', 'knn_rain',
+        'knn_temp', 'knn_hum', 'knn_wind', 'knn_rain', 'knn_rainfall_mm',
     ]
 
 
@@ -362,7 +365,7 @@ def main():
     all_metrics = {}
 
     # Train regression models
-    for target in ['temperature', 'humidity', 'wind_speed']:
+    for target in ['temperature', 'humidity', 'wind_speed', 'rainfall_mm']:
         y_train = df.loc[indices_train, target]
         y_test = df.loc[indices_test, target]
 

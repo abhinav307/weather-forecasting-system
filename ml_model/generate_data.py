@@ -8,6 +8,19 @@ seasonal variation globally.
 import numpy as np
 import pandas as pd
 import os
+import json
+
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.join(PROJECT_DIR, 'saved_models')
+PRECIP_PATH = os.path.join(MODELS_DIR, 'city_precipitation.json')
+
+def load_city_precip():
+    if os.path.exists(PRECIP_PATH):
+        with open(PRECIP_PATH, 'r') as f:
+            return json.load(f)
+    return {}
+
+city_precip = load_city_precip()
 
 np.random.seed(42)
 
@@ -290,6 +303,22 @@ def get_interpolated_value(lat, lon, value_idx, month_idx=None):
     return sum(w * v for w, v in zip(weights, values)) / total_w
 
 
+def get_rainfall_for_location(lat, lon, month_idx):
+    if not city_precip: return 0.0
+    min_dist = float('inf')
+    best_rain = 0.0
+    m_str = str(month_idx + 1)
+    
+    for k, monthly in city_precip.items():
+        base_lat, base_lon = map(float, k.split(","))
+        dist = (lat - base_lat)**2 + (lon - base_lon)**2
+        if dist < min_dist:
+            min_dist = dist
+            if m_str in monthly:
+                best_rain = monthly[m_str].get('rainfall_mm', 0.0)
+    return best_rain
+
+
 def get_temperature_for_location(lat, lon, month_idx):
     return get_interpolated_value(lat, lon, 2, month_idx)
 
@@ -373,6 +402,7 @@ def generate_weather_data(n=NUM_SAMPLES):
     humidities = np.zeros(n)
     wind_speeds = np.zeros(n)
     rain_labels = np.zeros(n, dtype=int)
+    rainfall_mms = np.zeros(n)
     elevations = np.zeros(n)
     coast_distances = np.zeros(n)
 
@@ -409,10 +439,20 @@ def generate_weather_data(n=NUM_SAMPLES):
         wind = base_wind + np.random.normal(0, 2.5)
         wind_speeds[i] = round(max(1, min(60, wind)), 1)
 
-        # ── Rain (monthly, with noise) ──
+        # ── Rain Probability (0 or 1 label) ──
         rain_prob = get_rain_prob_for_location(lat, lon, month_idx)
         rain_prob = np.clip(rain_prob, 0.01, 0.95)
-        rain_labels[i] = 1 if np.random.random() < rain_prob else 0
+        is_rain = 1 if np.random.random() < rain_prob else 0
+        rain_labels[i] = is_rain
+
+        # ── Rainfall amounts (mm) ──
+        base_rainfall = get_rainfall_for_location(lat, lon, month_idx)
+        rainfall = base_rainfall * np.random.uniform(0.6, 1.4)
+        if is_rain == 0:
+            rainfall = 0.0
+        elif rainfall == 0.0 and is_rain == 1:
+            rainfall = np.random.uniform(1.0, 5.0)  # Trace amounts if it rained unexpectedly
+        rainfall_mms[i] = round(max(0, rainfall), 1)
 
     df = pd.DataFrame({
         'latitude': np.round(all_lats, 4),
@@ -424,7 +464,8 @@ def generate_weather_data(n=NUM_SAMPLES):
         'temperature': temperatures,
         'humidity': humidities,
         'wind_speed': wind_speeds,
-        'rain': rain_labels
+        'rain': rain_labels,
+        'rainfall_mm': rainfall_mms
     })
 
     return df

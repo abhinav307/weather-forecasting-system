@@ -80,33 +80,36 @@ def main():
 
     updated = 0
     total = len(normals)
-    for i, (key, monthly) in enumerate(normals.items(), 1):
+    data_to_save = {}
+    data_to_save = {}
+    
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    
+    def process_key(key):
         lat, lon = map(float, key.split(","))
-        print(f"[{i}/{total}] ({lat}, {lon})...", end=" ", flush=True)
+        try:
+            precip_data = fetch_monthly_precip(lat, lon)
+            return key, precip_data
+        except Exception:
+            return key, None
+        
+    print(f"[*] Dispatching {total} parallel requests with max_workers=5...")
+    PRECIP_PATH = os.path.join(MODELS_DIR, 'city_precipitation.json')
+    os.makedirs(MODELS_DIR, exist_ok=True)
 
-        precip_data = fetch_monthly_precip(lat, lon)
-        if precip_data:
-            for m_str, m_data in monthly.items():
-                m = int(m_str)
-                if m in precip_data:
-                    m_data["rainfall_mm"] = precip_data[m]["rainfall_mm"]
-                    m_data["mean_wind_max"] = precip_data[m]["mean_wind_max"]
-            updated += 1
-            # Show sample
-            if 7 in precip_data:
-                print(f"Jul rain={precip_data[7]['rainfall_mm']}mm, wind_max={precip_data[7]['mean_wind_max']}kph")
-            else:
-                print("OK")
-        else:
-            print("[WARN] No data")
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {executor.submit(process_key, k): k for k in normals.keys()}
+        for i, future in enumerate(as_completed(futures), 1):
+            key, precip_data = future.result()
+            if precip_data:
+                data_to_save[key] = precip_data
+                updated += 1
+                with open(PRECIP_PATH, 'w') as f:
+                    json.dump(data_to_save, f)
+            print(f"\r[*] Progress: {i}/{total} completed.", end="", flush=True)
 
-        time.sleep(1.5)
-
-    # Save updated normals
-    with open(NORMALS_PATH, 'w') as f:
-        json.dump(normals, f)
-    print(f"\n[*] Updated {updated}/{total} cities with real precipitation + wind data")
-    print(f"[*] Saved -> {NORMALS_PATH}")
+    print(f"\n[*] Updated {updated}/{total} cities with precipitation data.")
+    print(f"[*] Saved standalone precip data -> {PRECIP_PATH}")
 
     # Validate: Print some cities
     print("\n[*] Sample validation:")
