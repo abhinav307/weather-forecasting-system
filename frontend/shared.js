@@ -3,7 +3,10 @@
  * Theme toggle, common helpers
  */
 
-const API_BASE = window.location.origin;
+// Auto-detect API base: Render backend for production, localhost for dev
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? window.location.origin                                          // Local dev
+    : 'https://weather-forecasting-system-backend.onrender.com';      // ← Replace with your Render URL
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
 
 // ── Theme Toggle ──────────────────────────────────────────────────
