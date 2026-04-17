@@ -6,7 +6,7 @@
 // ── Configuration ─────────────────────────────────────────────────
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? window.location.origin
-    : 'https://weather-forecasting-system-backend.onrender.com';
+    : 'https://weather-forecasting-system-o3lu.onrender.com';
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
 
 // ── State ─────────────────────────────────────────────────────────
