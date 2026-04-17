@@ -495,43 +495,59 @@ def prepare_features(lat, lon, month):
 
 # ── API Endpoints ──────────────────────────────────────────────────
 
-def apply_biome_heuristics(lat, lon, m, rainfall_mm, rain_prob):
-    '''Forces strict meteorological compliance for regions poorly covered by interpolation nodes.'''
-    # 1. Asian Monsoons (India, Southeast Asia, Sri Lanka)
-    if (5 <= lat <= 35) and (65 <= lon <= 125):
-        if m in [6, 7, 8, 9]: # Advancing Summer Monsoon
-            return max(150.0, rainfall_mm*2), min(0.95, max(0.85, rain_prob*2))
-        elif m in [10, 11, 12] and (5 <= lat <= 15): # Retreating/Maha Monsoon (Sri Lanka, South India)
-            return max(100.0, rainfall_mm), min(0.70, max(0.50, rain_prob))
+import math
+
+def calculate_theoretical_rain(lat, lon, m):
+    """Meteorological ITCZ bell-curve model to provide organic global precipitation."""
+    itcz_lat = 20.0 * math.sin((m - 5) * math.pi / 6)
+    dist_to_itcz = abs(lat - itcz_lat)
+    
+    if abs(lat) <= 30: # Tropics / Subtropics
+        is_india = (8 <= lat <= 32) and (70 <= lon <= 90)
+        is_se_asia = (5 <= lat <= 22) and (95 <= lon <= 120)
+        is_amazon = (-15 <= lat <= 5) and (-80 <= lon <= -40)
+        is_congo = (-10 <= lat <= 10) and (10 <= lon <= 30)
+        is_indonesia = (-10 <= lat <= 10) and (95 <= lon <= 150)
+        
+        base_rain = 250.0 * math.exp(-0.015 * (dist_to_itcz ** 2))
+        
+        if is_india or is_se_asia:
+            base_rain *= 2.5 if dist_to_itcz < 15 else 0.2
+        elif is_amazon or is_congo or is_indonesia:
+            base_rain = max(150.0, 300.0 * math.exp(-0.005 * (dist_to_itcz ** 2)))
+
+        is_sahara = (15 <= lat <= 30) and (-20 <= lon <= 45)
+        is_arabia = (15 <= lat <= 30) and (45 <= lon <= 60)
+        is_outback = (-30 <= lat <= -18) and (115 <= lon <= 145)
+        is_atacama = (-30 <= lat <= -15) and (-75 <= lon <= -65)
+        is_namib = (-30 <= lat <= -15) and (12 <= lon <= 20)
+        
+        if is_sahara or is_arabia or is_atacama or is_namib: base_rain *= 0.02
+        elif is_outback: base_rain *= 0.15
+            
+    else: # Temperate / Polar
+        is_mediterranean = (30 <= lat <= 45) and (-10 <= lon <= 45) 
+        is_cape_town = (-35 <= lat <= -30) and (15 <= lon <= 25)
+        is_calif = (32 <= lat <= 42) and (-125 <= lon <= -115)
+        is_sw_oz = (-35 <= lat <= -30) and (115 <= lon <= 120)
+        
+        if is_mediterranean or is_cape_town or is_calif or is_sw_oz:
+            winter_factor = 1.0 if (dist_to_itcz > 30) else 0.15
+            base_rain = 80.0 * winter_factor
         else:
-            return min(80.0, rainfall_mm), min(0.40, rain_prob)
+            base_rain = 60.0 + 15.0 * math.sin((m - 1) * math.pi / 6)
             
-    # 2. Equatorial Rainforests (Borneo/Sarawak, Congo, Amazon)
-    if -10 <= lat <= 10:
-        if (95 <= lon <= 150) or (-80 <= lon <= -40) or (10 <= lon <= 45):
-            return max(180.0, rainfall_mm), min(0.95, max(0.65, rain_prob))
-            
-    # 3. Savannahs & Subtropical (Botswana, Zambia, South Africa)
-    if (-30 <= lat <= -10) and (15 <= lon <= 45): # Southern Africa
-        if m in [11, 12, 1, 2, 3]: # Wet Summer
-            return max(60.0, rainfall_mm), min(0.60, max(0.30, rain_prob))
-        else: # Dry Winter
-            return min(10.0, rainfall_mm/4), min(0.05, rain_prob/4)
-            
-    # 4. Oceanic Temperate (Tasmania, New Zealand, UK)
-    if (abs(lat) >= 40) and ((140 <= lon <= 180) or (-15 <= lon <= 15)):
-        # Frequent light precipitation
-        r_mm = max(40.0, min(120.0, rainfall_mm))
-        r_pr = max(0.50, min(0.85, rain_prob * 1.5))
-        return r_mm, r_pr
+    if abs(lat) > 60:
+        base_rain *= max(0.1, 1.0 - (abs(lat) - 60) / 30.0)
         
-    # 5. Arid Deserts (Middle East, Sahara, Outback)
-    if (15 <= lat <= 35) and (-20 <= lon <= 60): # MENA
-        return min(10.0, rainfall_mm/4), min(0.08, rain_prob/4)
-    if (-35 <= lat <= -15) and (110 <= lon <= 150): # Australia Outback
-        return min(25.0, rainfall_mm/2), min(0.15, rain_prob/2)
-        
-    return rainfall_mm, rain_prob
+    return max(0.0, base_rain)
+
+def get_theoretical_prob(rain):
+    if rain < 1.0: return 0.0
+    elif rain < 15.0: return min(0.50, rain / 30.0)
+    elif rain < 50.0: return min(0.70, rain / 100.0 + 0.2)
+    elif rain < 150.0: return min(0.85, (rain - 50) / 250.0 + 0.45)
+    else: return min(0.95, rain / 500.0 + 0.65)
 
 @app.route('/api/predict', methods=['GET', 'POST'])
 def predict():
@@ -580,27 +596,17 @@ def predict():
         model_rain = float(models['rain'].predict_proba(X)[0][1])
         # 85% real data, 15% model adjustment
         rain_probability = 0.85 * knn_rain + 0.15 * model_rain
-        # Rainfall in mm: Hybrid approach matching annual endpoint
+        # Rainfall in mm: Hybrid ML + Global Mathematical Weather Model
         knn_rainfall_mm = knn.get('rainfall_mm', 0.0)
         model_rainfall_mm = float(models['rainfall_mm'].predict(X)[0])
-        rainfall_mm = max(0.0, 0.5 * knn_rainfall_mm + 0.5 * model_rainfall_mm)
+        ml_rainfall_mm = max(0.0, 0.5 * knn_rainfall_mm + 0.5 * model_rainfall_mm)
         
-        # Apply strict global biome rules to guarantee meteorological perfection before final evaluation
-        rainfall_mm, rain_probability = apply_biome_heuristics(lat, lon, month, rainfall_mm, rain_probability)
+        # Superimpose continuous ITCZ sine-wave to organically fix gaps in ML interpolation
+        theory_rainfall_mm = calculate_theoretical_rain(lat, lon, month)
+        rainfall_mm = 0.5 * ml_rainfall_mm + 0.5 * theory_rainfall_mm
 
-        # Desert/Drought fallback for perfectly empty skies
-        if rainfall_mm == 0.0 and rain_probability > 0.05:
-            days = 30
-            avg_mm = 6.0 if abs(lat) < 23.5 else 4.0 if abs(lat) < 45 else 3.0
-            rainfall_mm = rain_probability * days * avg_mm
-
-        # Final pass constraints
-        if rainfall_mm < 1.0:
-            rain_probability = 0.0
-        elif rainfall_mm > 150.0:
-            rain_probability = min(0.95, rain_probability * 1.5)
-        elif rainfall_mm > 50.0:
-            rain_probability = min(0.85, rain_probability * 1.2)
+        # Organically map Rain Chance directly from Rain Volume to avoid "step functions"
+        rain_probability = get_theoretical_prob(rainfall_mm)
         
         rain_prediction = 1 if rain_probability > 0.5 else 0
         
@@ -760,26 +766,17 @@ def forecast():
             model_rain = float(models['rain'].predict_proba(X)[0][1])
             rain_prob = 0.85 * knn_rain + 0.15 * model_rain
 
-            # Rainfall mm: Hybrid approach (XGBoost now supports rainfall)
+            # Rainfall mm: Hybrid ML + Global Mathematical Weather Model
             knn_rainfall_mm = knn.get('rainfall_mm', 0.0)
             model_rainfall_mm = float(models['rainfall_mm'].predict(X)[0])
-            rainfall_mm = max(0.0, 0.5 * knn_rainfall_mm + 0.5 * model_rainfall_mm)
+            ml_rainfall_mm = max(0.0, 0.5 * knn_rainfall_mm + 0.5 * model_rainfall_mm)
             
-            # Apply strict global biome rules
-            rainfall_mm, rain_prob = apply_biome_heuristics(lat, lon, m, rainfall_mm, rain_prob)
-            
-            if rainfall_mm == 0.0 and rain_prob > 0.05:
-                days = 30
-                avg_mm = 6.0 if abs(lat) < 23.5 else 4.0 if abs(lat) < 45 else 3.0
-                rainfall_mm = rain_prob * days * avg_mm
+            # Superimpose continuous ITCZ sine-wave
+            theory_rainfall_mm = calculate_theoretical_rain(lat, lon, m)
+            rainfall_mm = 0.5 * ml_rainfall_mm + 0.5 * theory_rainfall_mm
 
-            # Final pass constraints
-            if rainfall_mm < 1.0:
-                rain_prob = 0.0
-            elif rainfall_mm > 150.0:
-                rain_prob = min(0.95, rain_prob * 1.5)
-            elif rainfall_mm > 50.0:
-                rain_prob = min(0.85, rain_prob * 1.2)
+            # Organically map Rain Chance directly from Rain Volume (no artificial blocks)
+            rain_prob = get_theoretical_prob(rainfall_mm)
 
             forecasts.append({
                 'month': m,
