@@ -265,28 +265,44 @@ def validate_weather(temp, humidity, wind, rain_prob, feels_like, dew_point):
 
 
 
-# Cache elevation lookups — avoids repeated API calls for same location
+# Cache elevation lookups
 _elevation_cache = {}
 
 def estimate_elevation(lat, lon):
-    """Get real elevation from Open-Meteo API, with LRU cache + fallback."""
-    # Round to 2 decimals for cache key (~1km precision)
+    """Estimate elevation using KNN from climate normals (no external API).
+    Falls back to geographic estimation if normals unavailable."""
     cache_key = (round(lat, 2), round(lon, 2))
     if cache_key in _elevation_cache:
         return _elevation_cache[cache_key]
 
-    try:
-        r = http_requests.get(
-            f'https://api.open-meteo.com/v1/elevation?latitude={lat}&longitude={lon}',
-            timeout=1.5
-        )
-        if r.status_code == 200:
-            elev = max(0, r.json()['elevation'][0])
-            _elevation_cache[cache_key] = elev
-            return elev
-    except:
-        pass
-    # Fallback: crude estimation
+    # Use KNN from climate normals for elevation
+    if climate_normals:
+        from math import radians, cos, sin, asin, sqrt
+        distances = []
+        for (clat, clon), monthly in climate_normals.items():
+            elev_data = monthly.get(1, {}).get('elevation', None)
+            if elev_data is None:
+                continue
+            lat1r, lon1r = radians(lat), radians(lon)
+            lat2r, lon2r = radians(clat), radians(clon)
+            dlat = lat2r - lat1r
+            dlon = lon2r - lon1r
+            a = sin(dlat/2)**2 + cos(lat1r)*cos(lat2r)*sin(dlon/2)**2
+            d = 6371 * 2 * asin(sqrt(a))
+            distances.append((d, elev_data))
+        if distances:
+            distances.sort()
+            nearest = distances[:3]
+            if nearest[0][0] < 1:
+                result = nearest[0][1]
+            else:
+                weights = [1/(d+0.01) for d, _ in nearest]
+                total_w = sum(weights)
+                result = sum(w * e / total_w for w, (_, e) in zip(weights, nearest))
+            _elevation_cache[cache_key] = result
+            return result
+
+    # Fallback: geographic estimation
     abs_lat = abs(lat)
     if 27 <= lat <= 36 and 75 <= lon <= 100:
         if lat >= 32: result = 2500
